@@ -1,4 +1,16 @@
-﻿#ifndef FAWLIB__ENCODING_HPP__
+﻿////////////////////////////////////////////////////////////////////////////////
+//
+// Class Name:  Encoding
+// Description: 编码转换类
+// Class URI:   https://github.com/fawdlstty/FawLib
+// Author:      Fawdlstty
+// Author URI:  https://www.fawdlstty.com/
+// License:     MIT
+// Last Update: Jan 08, 2019
+//
+////////////////////////////////////////////////////////////////////////////////
+
+#ifndef FAWLIB__ENCODING_HPP__
 #define FAWLIB__ENCODING_HPP__
 
 
@@ -8,7 +20,7 @@
 
 #ifndef _FAW_STRING_TYPE
 	#define _FAW_STRING_TYPE
-	namespace FawLib {
+	namespace faw {
 		#ifdef UNICODE
 			typedef ::std::wstring string_t;
 		#else
@@ -17,7 +29,7 @@
 	}
 	#if _HAS_CXX17
 		#include <string_view>
-		namespace FawLib {
+		namespace faw {
 			#ifdef UNICODE
 				typedef ::std::wstring_view string_view_t;
 			#else
@@ -29,7 +41,7 @@
 			typedef string string_view;
 			typedef wstring wstring_view;
 		}
-		namespace FawLib {
+		namespace faw {
 			typedef string_t string_view_t;
 		}
 	#endif
@@ -37,7 +49,7 @@
 
 
 
-namespace FawLib {
+namespace faw {
 	class Encoding {
 	public:
 		// 编码猜测
