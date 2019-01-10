@@ -6,7 +6,7 @@
 // Author:      Fawdlstty
 // Author URI:  https://www.fawdlstty.com/
 // License:     MIT
-// Last Update: Jan 08, 2019
+// Last Update: Jan 09, 2019
 //
 ////////////////////////////////////////////////////////////////////////////////
 
@@ -53,24 +53,27 @@ namespace faw {
 	class Encoding {
 	public:
 		// 编码猜测
-		static std::string guess (unsigned char *data, int length) {
-			if (is_ascii (data, length)) {
+		static std::string guess (std::string_view data) {
+			if (is_ascii (data)) {
 				return "ascii";
-			} else if (is_utf8 (data, length)) {
+			} else if (is_utf8 (data)) {
 				return "utf8";
-			} else if (is_gb18030 (data, length)) {
+			} else if (is_gb18030 (data)) {
 				return "gb18030";
-			} else if (is_utf16 (data, length)) {
+			} else if (is_utf16 (data)) {
 				return "utf16";
 			} else {
 				return "iso-8859-1";
 			}
 		}
-		static bool is_ascii (unsigned char *data, int length) {
-			while (--length >= 0 && !(data[length] & 0x80));
-			return length < 0;
+		static bool is_ascii (std::string_view data) {
+			for (size_t i = 0; i < data.size (); ++i) {
+				if (data[i] & 0x80)
+					return false;
+			}
+			return true;
 		}
-		static bool is_utf8 (unsigned char *data, int length) {
+		static bool is_utf8 (std::string_view data) {
 			auto high_len = [] (unsigned char ch) {
 				int _len = 0;
 				while (ch & 0x80) {
@@ -80,7 +83,7 @@ namespace faw {
 				return _len;
 			};
 			int state = 0;
-			for (int i = 0; i < length; ++i) {
+			for (size_t i = 0; i < data.size (); ++i) {
 				int _len = high_len (data[i]);
 				if (state > 0) {
 					if (_len != 1)
@@ -94,9 +97,9 @@ namespace faw {
 			}
 			return (state == 0);
 		}
-		static bool is_gb18030 (unsigned char *data, int length) {
+		static bool is_gb18030 (std::string_view data) {
 			int state = 0;
-			for (int i = 0; i < length; ++i) {
+			for (size_t i = 0; i < data.size (); ++i) {
 				if (data[i] & 0x80) {
 					state = 1 - state;
 				} else if (state == 1) {
@@ -105,10 +108,10 @@ namespace faw {
 			}
 			return true;
 		}
-		static bool is_utf16 (unsigned char *data, int length) {
-			if (length % 2)
+		static bool is_utf16 (std::string_view data) {
+			if (data.size () % 2)
 				return false;
-			for (int i = 0; i < length; i += 2) {
+			for (size_t i = 0; i < data.size (); i += 2) {
 				if ((data[i] & 0x80) != (data[i + 1] & 0x80))
 					return false;
 			}
@@ -249,7 +252,7 @@ namespace faw {
 		}
 
 	public:
-		// 格式转换
+		// 转码格式转换
 		static std::string percent_str_encode (std::string_view data) {
 			const static char *hex_char = "0123456789ABCDEF";
 			std::string ret = "";

@@ -6,7 +6,7 @@
 // Author:      Fawdlstty
 // Author URI:  https://www.fawdlstty.com/
 // License:     MIT
-// Last Update: Jan 08, 2019
+// Last Update: Jan 09, 2019
 //
 ////////////////////////////////////////////////////////////////////////////////
 
@@ -16,11 +16,14 @@
 
 
 #include <iostream>
+//#include <iomanip>
 #include <string>
 #include <vector>
 #include <regex>
+#include <tuple>
+#include <map>
 #include <cstdint>
-//#include <algorithm>
+#include <algorithm>
 #include <tchar.h>
 
 #include "Encoding.hpp"
@@ -28,25 +31,40 @@
 
 
 namespace faw {
+	enum class flag {
+		none			= 0x00000000,
+		decimal_2		= 0x00000000,
+		decimal_3		= 0x00010000,
+		decimal_4		= 0x00020000,
+		decimal_5		= 0x00030000,
+		decimal_6		= 0x00040000,
+		decimal_7		= 0x00050000,
+		decimal_8		= 0x00060000,
+		decimal_9		= 0x00070000,
+		whole_10		= 0x00080000,
+		whole_100		= 0x00090000,
+		whole_1k		= 0x000a0000,
+		whole_10k		= 0x000b0000,
+		whole_100k		= 0x000c0000,
+		whole_1m		= 0x000d0000,
+		decimal_0		= 0x000e0000,
+		decimal_1		= 0x000f0000,
+		_align			= 0x00300000,
+		align_left		= 0x00100000,
+		align_middle	= 0x00200000,
+		align_right		= 0x00000000,
+	};
+	// 用于将数据输入管道时，设置左右两侧padding以及浮点数小数位数设置
+	flag set_width (size_t _width, flag _f = flag::none) { return (flag) ((_width & 0xffff) | (size_t) _f); }
+
 	class String {
 	public:
+		// 字符串构造函数
 		String () {}
 		String (const char _c, size_t _len = 1) { m_str.assign (_len, (TCHAR) _c); }
 		String (const wchar_t _c, size_t _len = 1) { m_str.assign (_len, (TCHAR) _c); }
-		String (const char *_s, size_t _len = std::string::npos) {
-			if (_len == std::string::npos) {
-				m_str = Encoding::gb18030_to_T (std::string_view (_s));
-			} else {
-				m_str = Encoding::gb18030_to_T (std::string_view (_s, _len));
-			}
-		}
-		String (const wchar_t *_s, size_t _len = std::wstring::npos) {
-			if (_len == std::wstring::npos) {
-				m_str = Encoding::utf16_to_T (std::wstring_view (_s));
-			} else {
-				m_str = Encoding::utf16_to_T (std::wstring_view (_s, _len));
-			}
-		}
+		String (const char *_s, size_t _len = _npos) { m_str = Encoding::gb18030_to_T (_len == _npos ? std::string_view (_s) : std::string_view (_s, _len)); }
+		String (const wchar_t *_s, size_t _len = _npos) { m_str = Encoding::utf16_to_T (_len == _npos ? std::wstring_view (_s) : std::wstring_view (_s, _len)); }
 		String (const std::string &_s): m_str (Encoding::gb18030_to_T (std::string_view (_s))) {}
 		String (const std::wstring &_s): m_str (Encoding::utf16_to_T (std::wstring_view (_s))) {}
 #if _HAS_CXX17
@@ -55,7 +73,8 @@ namespace faw {
 #endif
 		String (const String &_s): m_str (_s.m_str) {}
 		String (const String *_s): m_str (_s->m_str) {}
-		//
+
+		// 字符串符号重载函数
 		String &operator= (const char *_s) { m_str = Encoding::gb18030_to_T (std::string_view (_s)); return *this; }
 		String &operator= (const wchar_t *_s) { m_str = Encoding::utf16_to_T (std::wstring_view (_s)); return *this; }
 		String &operator= (const std::string &_s) { m_str = Encoding::gb18030_to_T (std::string_view (_s)); return *this; }
@@ -63,8 +82,8 @@ namespace faw {
 		String &operator= (const String &_s) { m_str = _s.m_str; return *this; }
 		String &operator= (const String *_s) { m_str = _s->m_str; return *this; }
 #if _HAS_CXX17
-		String &operator= (const std::string_view &_s) { m_str = Encoding::gb18030_to_T (_s); return *this; }
-		String &operator= (const std::wstring_view &_s) { m_str = Encoding::utf16_to_T (_s); return *this; }
+		String &operator= (const std::string_view _s) { m_str = Encoding::gb18030_to_T (_s); return *this; }
+		String &operator= (const std::wstring_view _s) { m_str = Encoding::utf16_to_T (_s); return *this; }
 #endif
 		//
 		String &operator+= (const char _c) { m_str += (TCHAR) _c; return *this; }
@@ -76,8 +95,8 @@ namespace faw {
 		String &operator+= (const String &_s) { m_str += _s.m_str; return *this; }
 		String &operator+= (const String *_s) { m_str += _s->m_str; return *this; }
 #if _HAS_CXX17
-		String &operator+= (const std::string_view &_s) { m_str += Encoding::gb18030_to_T (_s); return *this; }
-		String &operator+= (const std::wstring_view &_s) { m_str += Encoding::utf16_to_T (_s); return *this; }
+		String &operator+= (const std::string_view _s) { m_str += Encoding::gb18030_to_T (_s); return *this; }
+		String &operator+= (const std::wstring_view _s) { m_str += Encoding::utf16_to_T (_s); return *this; }
 #endif
 		//
 		String operator+ (const char _c) { String _o (this); _o.m_str += (TCHAR) _c; return _o; }
@@ -89,8 +108,8 @@ namespace faw {
 		String operator+ (const String &_s) { String _o (this); _o.m_str += _s.m_str; return _o; }
 		String operator+ (const String *_s) { String _o (this); _o.m_str += _s->m_str; return _o; }
 #if _HAS_CXX17
-		String operator+ (const std::string_view &_s) { String _o (this); _o.m_str += Encoding::gb18030_to_T (_s); return _o; }
-		String operator+ (const std::wstring_view &_s) { String _o (this); _o.m_str += Encoding::utf16_to_T (_s); return _o; }
+		String operator+ (const std::string_view _s) { String _o (this); _o.m_str += Encoding::gb18030_to_T (_s); return _o; }
+		String operator+ (const std::wstring_view _s) { String _o (this); _o.m_str += Encoding::utf16_to_T (_s); return _o; }
 #endif
 		//
 		friend String operator+ (const char _c, String &_o) { _o.m_str.insert (_o.m_str.begin (), (TCHAR) _c); }
@@ -103,29 +122,45 @@ namespace faw {
 		friend String operator+ (const std::string_view &_s, String &_o) { String _so (_s); _so.m_str += _o.m_str; return _so; }
 		friend String operator+ (const std::wstring_view &_s, String &_o) { String _so (_s); _so.m_str += _o.m_str; return _so; }
 #endif
-		//
-		String operator* (size_t n) {
-			String _s;
-			if (n == 0 || n == string_t::npos)
-				return _s;
-			while (n-- > 0)
-				_s.m_str += m_str;
-			return _s;
-		}
-		String &operator*= (size_t n) {
-			if (n == 0 || n == string_t::npos) {
-				m_str.clear ();
-			} else {
-				string_t _str = m_str;
-				while (--n > 0)
-					m_str += _str;
-			}
-			return *this;
-		}
+
+		// 比较
+		bool operator== (const char *_s) { String _o (_s); return m_str == _o.m_str; }
+		bool operator== (const wchar_t *_s) { String _o (_s); return m_str == _o.m_str; }
+		bool operator== (const std::string &_s) { String _o (_s); return m_str == _o.m_str; }
+		bool operator== (const std::wstring &_s) { String _o (_s); return m_str == _o.m_str; }
 		bool operator== (String &_o) { return m_str == _o.m_str; }
-		bool is_equal (String &_o) { return m_str == _o.m_str; }
-		bool is_equal_nocase (String &_o) {
-			size_t size = m_str.size ();
+		bool operator== (String *_o) { return m_str == _o->m_str; }
+#if _HAS_CXX17
+		bool operator== (const std::string_view _s) { String _o (_s); return m_str == _o.m_str; }
+		bool operator== (const std::wstring_view _s) { String _o (_s); return m_str == _o.m_str; }
+#endif
+		//
+		friend bool operator== (const char *_s, String &_o) { return _o == _s; }
+		friend bool operator== (const wchar_t *_s, String &_o) { return _o == _s; }
+		friend bool operator== (const std::string &_s, String &_o) { return _o == _s; }
+		friend bool operator== (const std::wstring &_s, String &_o) { return _o == _s; }
+		friend bool operator== (String *_o, String &_o2) { return _o2  == *_o; }
+#if _HAS_CXX17
+		friend bool operator== (const std::string_view _s, String &_o) { return _o == _s; }
+		friend bool operator== (const std::wstring_view _s, String &_o) { return _o == _s; }
+#endif
+		//
+		bool is_equal (const char *_s) { return operator== (_s); }
+		bool is_equal (const wchar_t *_s) { return operator== (_s); }
+		bool is_equal (const std::string &_s) { return operator== (_s); }
+		bool is_equal (const std::wstring &_s) { return operator== (_s); }
+		bool is_equal (String &_o) { return operator== (_o); }
+		bool is_equal (String *_o) { return operator== (_o); }
+#if _HAS_CXX17
+		bool is_equal (const std::string_view _s) { return operator== (_s); }
+		bool is_equal (const std::wstring_view _s) { return operator== (_s); }
+#endif
+		//
+		bool is_equal_nocase (const char *_s) { String _o (_s); return is_equal_nocase (_o); }
+		bool is_equal_nocase (const wchar_t *_s) { String _o (_s); return is_equal_nocase (_o); }
+		bool is_equal_nocase (const std::string &_s) { String _o (_s); return is_equal_nocase (_o); }
+		bool is_equal_nocase (const std::wstring &_s) { String _o (_s); return is_equal_nocase (_o); }
+		bool is_equal_nocase (String &_o) { size_t size = m_str.size ();
 			if (size != _o.m_str.size ())
 				return false;
 			for (size_t i = 0; i < size; ++i) {
@@ -141,21 +176,35 @@ namespace faw {
 					return false;
 				}
 			}
-			return true;
+			return true; }
+		bool is_equal_nocase (String *_o) { return is_equal_nocase (*_o); }
+#if _HAS_CXX17
+		bool is_equal_nocase (const std::string_view _s) { String _o (_s); return is_equal_nocase (_o); }
+		bool is_equal_nocase (const std::wstring_view _s) { String _o (_s); return is_equal_nocase (_o); }
+#endif
+
+		// 其他符号重载函数
+		String operator* (size_t n) {
+			String _s;
+			if (n == 0 || n == _npos)
+				return _s;
+			while (n-- > 0)
+				_s.m_str += m_str;
+			return _s;
 		}
-		virtual ~String () {}
-		//
-		bool empty () const { return m_str.empty (); }
-		void clear () { m_str.clear (); }
-		void free () { string_t _str = _T (""); _str.swap (m_str); }
-		size_t size () const { return m_str.size (); }
-		TCHAR &operator[] (size_t n) { return m_str [n]; }
-		LPCTSTR c_str () const { return m_str.c_str (); }
-		const string_t &str () const { return m_str; }
-		string_view_t str_view () const { return string_view_t (m_str); }
-		std::string stra () const { return Encoding::T_to_gb18030 (m_str); }
-		std::wstring strw () const { return Encoding::T_to_utf16 (m_str); }
-		//
+		friend String operator* (size_t n, String &_o) { return _o.operator* (n); }
+		String &operator*= (size_t n) {
+			if (n == 0 || n == _npos) {
+				m_str.clear ();
+			} else {
+				string_t _str = m_str;
+				while (--n > 0)
+					m_str += _str;
+			}
+			return *this;
+		}
+
+		// 字符串迭代器处理
 		string_t::iterator begin () { return m_str.begin (); }
 		string_t::iterator end () { return m_str.end (); }
 		string_t::const_iterator cbegin () { return m_str.cbegin (); }
@@ -164,7 +213,10 @@ namespace faw {
 		string_t::reverse_iterator rend () { return m_str.rend (); }
 		string_t::const_reverse_iterator crbegin () { return m_str.crbegin (); }
 		string_t::const_reverse_iterator crend () { return m_str.crend (); }
-		//
+
+		// 字符串流处理
+		String &operator<< (flag _f) { m_last_flag = _f; return *this; }
+		friend String &operator>> (flag _f, String &_o) { _o.m_last_flag = _f; return _o; }
 		String &operator>> (TCHAR &n) {
 			if (m_str.empty ()) {
 				n = _T ('\0');
@@ -175,11 +227,29 @@ namespace faw {
 			return *this;
 		}
 		String &operator<< (TCHAR n) {
+			double _dot = 0;
+			size_t _width = 0;
+			flag _align = flag::align_right;
+			std::tie (_dot, _width, _align) = _get_flag_info (m_last_flag);
+			string_t _left, _right;
+			std::tie (_left, _right) = _get_flag_space (_width, _align);
+			//
+			m_str += _left;
 			m_str.push_back (n);
+			m_str += _right;
 			return *this;
 		}
 		friend String &operator>> (TCHAR n, String &_o) {
-			_o.m_str.insert (_o.m_str.begin (), n);
+			double _dot = 0;
+			size_t _width = 0;
+			flag _align = flag::align_right;
+			std::tie (_dot, _width, _align) = _get_flag_info (_o.m_last_flag);
+			string_t _left, _right;
+			std::tie (_left, _right) = _get_flag_space (_width, _align);
+			//
+			_left += n;
+			_left += _right;
+			_o.m_str.insert (_o.m_str.begin (), _left.begin (), _left.end ());
 			return _o;
 		}
 		friend String &operator<< (TCHAR &n, String &_o) {
@@ -190,10 +260,10 @@ namespace faw {
 				_o.m_str.erase (_o.m_str.begin ());
 			} return _o;
 		}
-		String &operator>> (intptr_t &n) {
+		String &operator>> (int &n) {
 			n = 0;
-			intptr_t _level = 1;
-			for (size_t i = m_str.size () - 1; i != string_t::npos; --i) {
+			int _level = 1;
+			for (size_t i = m_str.size () - 1; i != _npos; --i) {
 				if (m_str[i] >= _T ('0') && m_str[i] <= _T ('9')) {
 					n += _level * (m_str[i] - _T ('0'));
 					m_str.erase (m_str.begin () + i);
@@ -208,33 +278,37 @@ namespace faw {
 			}
 			return *this;
 		}
-		String &operator<< (intptr_t n) {
-			String _s;
-			bool _sign = (n < 0);
-			while (n > 0) {
-				_s += (TCHAR) ((n % 10) + _T ('0'));
-				n /= 10;
-			}
-			if (_sign)
-				_s += _T ('-');
-			_s.reverse_self ();
-			*this += _s;
+		String &operator<< (int n) {
+			String _tmp = String::format (_T ("%d"), n);
+			//
+			double _dot = 0;
+			size_t _width = 0;
+			flag _align = flag::align_right;
+			std::tie (_dot, _width, _align) = _get_flag_info (m_last_flag);
+			string_t _left, _right;
+			std::tie (_left, _right) = _get_flag_space (_width, _align, _tmp.size ());
+			//
+			m_str += _left;
+			m_str += _tmp.m_str;
+			m_str += _right;
 			return *this;
 		}
-		friend String &operator>> (intptr_t n, String &_o) {
-			String _s = (n == 0 ? _T ("0") : _T (""));
-			bool _sign = (n < 0);
-			while (n > 0) {
-				_s += (TCHAR) ((n % 10) + _T ('0'));
-				n /= 10;
-			}
-			if (_sign)
-				_s += _T ('-');
-			_s.reverse_self ();
-			_o.m_str.insert (_o.m_str.begin (), _s.m_str.begin (), _s.m_str.end ());
+		friend String &operator>> (int n, String &_o) {
+			String _tmp = String::format (_T ("%d"), n);
+			//
+			double _dot = 0;
+			size_t _width = 0;
+			flag _align = flag::align_right;
+			std::tie (_dot, _width, _align) = _get_flag_info (_o.m_last_flag);
+			string_t _left, _right;
+			std::tie (_left, _right) = _get_flag_space (_width, _align);
+			//
+			_left += _tmp.m_str;
+			_left += _right;
+			_o.m_str.insert (_o.m_str.begin (), _left.begin (), _left.end ());
 			return _o;
 		}
-		friend String &operator<< (intptr_t &n, String &_o) {
+		friend String &operator<< (int &n, String &_o) {
 			n = 0;
 			if (_o.m_str.size () == 0)
 				return _o;
@@ -247,10 +321,10 @@ namespace faw {
 			_o.m_str.erase (_o.m_str.begin (), _o.m_str.begin () + i);
 			return _o;
 		}
-		String &operator>> (uintptr_t &n) {
+		String &operator>> (unsigned int &n) {
 			n = 0;
-			uintptr_t _level = 1;
-			for (size_t i = m_str.size () - 1; i != string_t::npos; --i) {
+			unsigned int _level = 1;
+			for (size_t i = m_str.size () - 1; i != _npos; --i) {
 				if (m_str[i] >= _T ('0') && m_str[i] <= _T ('9')) {
 					n += _level * (m_str[i] - _T ('0'));
 					m_str.erase (m_str.begin () + i);
@@ -261,27 +335,37 @@ namespace faw {
 			}
 			return *this;
 		}
-		String &operator<< (uintptr_t n) {
-			String _s;
-			while (n > 0) {
-				_s += (TCHAR) ((n % 10) + _T ('0'));
-				n /= 10;
-			}
-			_s.reverse_self ();
-			*this += _s;
+		String &operator<< (unsigned int n) {
+			String _tmp = String::format (_T ("%u"), n);
+			//
+			double _dot = 0;
+			size_t _width = 0;
+			flag _align = flag::align_right;
+			std::tie (_dot, _width, _align) = _get_flag_info (m_last_flag);
+			string_t _left, _right;
+			std::tie (_left, _right) = _get_flag_space (_width, _align, _tmp.size ());
+			//
+			m_str += _left;
+			m_str += _tmp.m_str;
+			m_str += _right;
 			return *this;
 		}
-		friend String &operator>> (uintptr_t n, String &_o) {
-			String _s = (n == 0 ? _T ("0") : _T (""));
-			while (n > 0) {
-				_s += (TCHAR) ((n % 10) + _T ('0'));
-				n /= 10;
-			}
-			_s.reverse_self ();
-			_o.m_str.insert (_o.m_str.begin (), _s.m_str.begin (), _s.m_str.end ());
+		friend String &operator>> (unsigned int n, String &_o) {
+			String _tmp = String::format (_T ("%u"), n);
+			//
+			double _dot = 0;
+			size_t _width = 0;
+			flag _align = flag::align_right;
+			std::tie (_dot, _width, _align) = _get_flag_info (_o.m_last_flag);
+			string_t _left, _right;
+			std::tie (_left, _right) = _get_flag_space (_width, _align);
+			//
+			_left += _tmp.m_str;
+			_left += _right;
+			_o.m_str.insert (_o.m_str.begin (), _left.begin (), _left.end ());
 			return _o;
 		}
-		friend String &operator<< (uintptr_t &n, String &_o) {
+		friend String &operator<< (unsigned int &n, String &_o) {
 			n = 0;
 			if (_o.m_str.size () == 0)
 				return _o;
@@ -291,66 +375,202 @@ namespace faw {
 			_o.m_str.erase (_o.m_str.begin (), _o.m_str.begin () + i);
 			return _o;
 		}
-		//
+		String &operator>> (float &n) {
+			n = 0;
+			float _level = 1;
+			for (size_t i = m_str.size () - 1; i != _npos; --i) {
+				if (m_str [i] >= _T ('0') && m_str [i] <= _T ('9')) {
+					n += _level * (m_str [i] - _T ('0'));
+					m_str.erase (m_str.begin () + i);
+					_level *= 10;
+				} else if (m_str [i] == _T ('-')) {
+					n = 0 - n;
+					m_str.erase (m_str.begin () + i);
+					break;
+				} else if (m_str [i] == _T ('.')) {
+					n /= (_level / 10);
+					_level = 0.1f;
+				} else {
+					break;
+				}
+			}
+			return *this;
+		}
+		String &operator<< (float n) {
+			double _dot = 0;
+			size_t _width = 0;
+			flag _align = flag::align_right;
+			std::tie (_dot, _width, _align) = _get_flag_info (m_last_flag);
+			String _tmp = String::format (String::format (_T ("%%.%df"), _dot).c_str (), n);
+			string_t _left, _right;
+			std::tie (_left, _right) = _get_flag_space (_width, _align, _tmp.size ());
+			//
+			m_str += _left;
+			m_str += _tmp.m_str;
+			m_str += _right;
+			return *this;
+		}
+		friend String &operator>> (float n, String &_o) {
+			double _dot = 0;
+			size_t _width = 0;
+			flag _align = flag::align_right;
+			std::tie (_dot, _width, _align) = _get_flag_info (_o.m_last_flag);
+			String _tmp = String::format (String::format (_T ("%%.%df"), _dot).c_str (), n);
+			string_t _left, _right;
+			std::tie (_left, _right) = _get_flag_space (_width, _align, _tmp.size ());
+			//
+			_left += _tmp.m_str;
+			_left += _right;
+			_o.m_str.insert (_o.m_str.begin (), _left.begin (), _left.end ());
+			return _o;
+		}
+		friend String &operator<< (float &n, String &_o) {
+			n = 0;
+			if (_o.m_str.size () == 0)
+				return _o;
+			bool _sign = (_o.m_str [0] == _T ('-'));
+			float _level = 1.0f;
+			size_t i = (_sign ? 1 : 0);
+			for (; i < _o.m_str.size (); ++i) {
+				if (_o.m_str [i] >= _T ('0') && _o.m_str [i] <= _T ('9')) {
+					if (_level >= 1.0f) {
+						n = n * 10 + (_o.m_str [i] - _T ('0'));
+					} else {
+						n += _level * (_o.m_str [i] - _T ('0'));
+						_level /= 10;
+					}
+				} else if (_o.m_str [i] == _T ('.')) {
+					_level = 0.1f;
+				}
+			}
+			if (_sign)
+				n = 0 - n;
+			_o.m_str.erase (_o.m_str.begin (), _o.m_str.begin () + i);
+			return _o;
+		}
+		String &operator>> (double &n) {
+			n = 0;
+			double _level = 1;
+			for (size_t i = m_str.size () - 1; i != _npos; --i) {
+				if (m_str [i] >= _T ('0') && m_str [i] <= _T ('9')) {
+					n += _level * (m_str [i] - _T ('0'));
+					m_str.erase (m_str.begin () + i);
+					_level *= 10;
+				} else if (m_str [i] == _T ('-')) {
+					n = 0 - n;
+					m_str.erase (m_str.begin () + i);
+					break;
+				} else if (m_str [i] == _T ('.')) {
+					n /= (_level / 10);
+					_level = 0.1;
+				} else {
+					break;
+				}
+			}
+			return *this;
+		}
+		String &operator<< (double n) {
+			double _dot = 0;
+			size_t _width = 0;
+			flag _align = flag::align_right;
+			std::tie (_dot, _width, _align) = _get_flag_info (m_last_flag);
+			String _tmp = String::format (String::format (_T ("%%.%dlf"), _dot).c_str (), n);
+			string_t _left, _right;
+			std::tie (_left, _right) = _get_flag_space (_width, _align, _tmp.size ());
+			//
+			m_str += _left;
+			m_str += _tmp.m_str;
+			m_str += _right;
+			return *this;
+		}
+		friend String &operator>> (double n, String &_o) {
+			double _dot = 0;
+			size_t _width = 0;
+			flag _align = flag::align_right;
+			std::tie (_dot, _width, _align) = _get_flag_info (_o.m_last_flag);
+			String _tmp = String::format (String::format (_T ("%%.%dlf"), _dot).c_str (), n);
+			string_t _left, _right;
+			std::tie (_left, _right) = _get_flag_space (_width, _align, _tmp.size ());
+			//
+			_left += _tmp.m_str;
+			_left += _right;
+			_o.m_str.insert (_o.m_str.begin (), _left.begin (), _left.end ());
+			return _o;
+		}
+		friend String &operator<< (double &n, String &_o) {
+			n = 0;
+			if (_o.m_str.size () == 0)
+				return _o;
+			bool _sign = (_o.m_str [0] == _T ('-'));
+			double _level = 1.0f;
+			size_t i = (_sign ? 1 : 0);
+			for (; i < _o.m_str.size (); ++i) {
+				if (_o.m_str [i] >= _T ('0') && _o.m_str [i] <= _T ('9')) {
+					if (_level >= 1.0f) {
+						n = n * 10 + (_o.m_str [i] - _T ('0'));
+					} else {
+						n += _level * (_o.m_str [i] - _T ('0'));
+						_level /= 10;
+					}
+				} else if (_o.m_str [i] == _T ('.')) {
+					_level = 0.1f;
+				}
+			}
+			if (_sign)
+				n = 0 - n;
+			_o.m_str.erase (_o.m_str.begin (), _o.m_str.begin () + i);
+			return _o;
+		}
+		String &operator<< (String &_s) {
+			double _dot = 0;
+			size_t _width = 0;
+			flag _align = flag::align_right;
+			std::tie (_dot, _width, _align) = _get_flag_info (m_last_flag);
+			string_t _left, _right;
+			std::tie (_left, _right) = _get_flag_space (_width, _align, _s.size ());
+			//
+			m_str += _left;
+			m_str += _s.m_str;
+			m_str += _right;
+			return *this;
+		}
+		String &operator>> (String &_s) {
+			double _dot = 0;
+			size_t _width = 0;
+			flag _align = flag::align_right;
+			std::tie (_dot, _width, _align) = _get_flag_info (_s.m_last_flag);
+			string_t _left, _right;
+			std::tie (_left, _right) = _get_flag_space (_width, _align, size ());
+			//
+			_s.m_str += _left;
+			_s.m_str += m_str;
+			_s.m_str += _right;
+			return *this;
+		}
 		friend std::ostream &operator<< (std::ostream &_stm, String &_s) { _stm << _s.stra (); return _stm; }
 		friend std::wostream &operator<< (std::wostream &_stm, String &_s) { _stm << _s.strw (); return _stm; }
-		//
+
+		// 字符串查找
 		size_t find (TCHAR _ch, size_t _off = 0) { return m_str.find (_ch, _off); }
-		size_t find (std::string_view _s, size_t _off = 0) {
-#ifdef _UNICODE
-			std::wstring _tmp_s = Encoding::gb18030_to_utf16 (_s);
-			return find (_tmp_s, _off);
-#else
-			return m_str.find (_s, _off);
-#endif
-		}
-		size_t find (std::wstring_view _s, size_t _off = 0) {
-#ifdef _UNICODE
-			return m_str.find (_s, _off);
-#else
-			std::string _tmp_s = Encoding::utf16_to_gb18030 (_s);
-			return find (_tmp_s, _off);
-#endif
-		}
 		size_t rfind (TCHAR _ch, size_t _off = 0) { return m_str.rfind (_ch, _off); }
-		size_t rfind (std::string_view _s, size_t _off = 0) {
 #ifdef _UNICODE
-			std::wstring _tmp_s = Encoding::gb18030_to_utf16 (_s);
-			return rfind (_tmp_s, _off);
+		size_t find (std::string_view _s, size_t _off = 0) { return find (Encoding::gb18030_to_utf16 (_s), _off); }
+		size_t find (std::wstring_view _s, size_t _off = 0) { return m_str.find (_s, _off); }
+		size_t rfind (std::string_view _s, size_t _off = 0) { return rfind (Encoding::gb18030_to_utf16 (_s), _off); }
+		size_t rfind (std::wstring_view _s, size_t _off = 0) { return m_str.rfind (_s, _off); }
 #else
-			return m_str.rfind (_s, _off);
+		size_t find (std::string_view _s, size_t _off = 0) { return find (_s, _off); }
+		size_t find (std::wstring_view _s, size_t _off = 0) { return m_str.find (Encoding::utf16_to_gb18030 (_s), _off); }
+		size_t rfind (std::string_view _s, size_t _off = 0) { return rfind (_s, _off); }
+		size_t rfind (std::wstring_view _s, size_t _off = 0) { return m_str.rfind (Encoding::utf16_to_gb18030 (_s), _off); }
 #endif
-		}
-		size_t rfind (std::wstring_view _s, size_t _off = 0) {
-#ifdef _UNICODE
-			return m_str.rfind (_s, _off);
-#else
-			std::string _tmp_s = Encoding::utf16_to_gb18030 (_s);
-			return rfind (_tmp_s, _off);
-#endif
-		}
-		//
+
+		// 字符串处理（生成新字符串）
 		String trim_left () const { String _s (this); _s.m_str.erase (0, _s.m_str.find_first_not_of (_T (' '))); return _s; }
 		String trim_right () const { String _s (this); _s.m_str.erase (_s.m_str.find_last_not_of (' ') + 1); return _s; }
 		String trim () const { return trim_left ().trim_right_self (); }
-		String upper () const {
-			String _s (this);
-			//std::transform (_s.m_str.begin (), _s.m_str.end (), _s.m_str.begin (), ::toupper);
-			for (size_t i = 0, size = _s.m_str.size (); i < size; ++i) {
-				if (_s.m_str [i] >= _T ('a') && _s.m_str [i] <= _T ('z'))
-					_s.m_str [i] = _s.m_str [i] - _T ('a') + _T ('A');
-			}
-			return _s;
-		}
-		String lower () const {
-			String _s (this);
-			//std::transform (_s.m_str.begin (), _s.m_str.end (), _s.m_str.begin (), ::tolower);
-			for (size_t i = 0, size = _s.m_str.size (); i < size; ++i) {
-				if (_s.m_str [i] >= _T ('A') && _s.m_str [i] <= _T ('Z'))
-					_s.m_str [i] = _s.m_str [i] - _T ('A') + _T ('a');
-			}
-			return _s;
-		}
+		String upper () const { String _s (this); std::transform (_s.m_str.begin (), _s.m_str.end (), _s.m_str.begin (), ::toupper); return _s; }
+		String lower () const { String _s (this); std::transform (_s.m_str.begin (), _s.m_str.end (), _s.m_str.begin (), ::tolower); return _s; }
 		String reverse () const {
 			String _s (this);
 			size_t size = _s.m_str.size ();
@@ -369,7 +589,7 @@ namespace faw {
 			return replace (_tmp_src, _tmp_dest);
 #else
 			size_t pos = _s.m_str.find (_src);
-			while (pos != std::string::npos) {
+			while (pos != _npos) {
 				_s.m_str.replace (pos, _src.size (), _dest);
 				pos = _src.find (_src, pos + 2);
 			}
@@ -380,7 +600,7 @@ namespace faw {
 			String _s (this);
 #ifdef _UNICODE
 			size_t pos = _s.m_str.find (_src);
-			while (pos != std::wstring::npos) {
+			while (pos != _npos) {
 				_s.m_str.replace (pos, _src.size (), _dest);
 				pos = _src.find (_src, pos + 2);
 			}
@@ -394,32 +614,19 @@ namespace faw {
 		String replace (TCHAR _src, TCHAR _dest) const {
 			String _s (this);
 			size_t pos = _s.m_str.find (_src);
-			while (pos != string_t::npos) {
+			while (pos != _npos) {
 				_s.m_str [pos] = _src;
-				pos = _s.m_str.find (_src);
+				pos = _s.m_str.find (_src, pos + 1);
 			}
 			return _s;
 		}
-		//
+
+		// 字符串处理（改变自身）
 		String &trim_left_self () { m_str.erase (0, m_str.find_first_not_of (_T (' '))); return *this; }
 		String &trim_right_self () { m_str.erase (m_str.find_last_not_of (' ') + 1); return *this; }
 		String &trim_self () { return trim_left_self ().trim_right_self (); }
-		String &upper_self () {
-			//std::transform (m_str.begin (), m_str.end (), m_str.begin (), ::toupper);
-			for (size_t i = 0; i < m_str.size (); ++i) {
-				if (m_str [i] >= _T ('a') && m_str [i] <= _T ('z'))
-					m_str [i] = m_str [i] - _T ('a') + _T ('A');
-			}
-			return *this;
-		}
-		String &lower_self () {
-			//std::transform (m_str.begin (), m_str.end (), m_str.begin (), ::tolower);
-			for (size_t i = 0; i < m_str.size (); ++i) {
-				if (m_str [i] >= _T ('A') && m_str [i] <= _T ('Z'))
-					m_str [i] = m_str [i] - _T ('A') + _T ('a');
-			}
-			return *this;
-		}
+		String &upper_self () { std::transform (m_str.begin (), m_str.end (), m_str.begin (), ::toupper); return *this; }
+		String &lower_self () { std::transform (m_str.begin (), m_str.end (), m_str.begin (), ::tolower); return *this; }
 		String &reverse_self () {
 			size_t size = m_str.size ();
 			for (size_t i = 0; i < size / 2; ++i) {
@@ -436,7 +643,7 @@ namespace faw {
 			return replace_self (_tmp_src, _tmp_dest);
 #else
 			size_t pos = m_str.find (_src);
-			while (pos != std::string::npos) {
+			while (pos != _npos) {
 				m_str.replace (pos, _src.size (), _dest);
 				pos = _src.find (_src, pos + 2);
 			}
@@ -446,7 +653,7 @@ namespace faw {
 		String &replace_self (std::wstring_view _src, std::wstring_view _dest) {
 #ifdef _UNICODE
 			size_t pos = m_str.find (_src);
-			while (pos != std::wstring::npos) {
+			while (pos != _npos) {
 				m_str.replace (pos, _src.size (), _dest);
 				pos = _src.find (_src, pos + 2);
 			}
@@ -459,19 +666,33 @@ namespace faw {
 		}
 		String &replace_self (TCHAR _src, TCHAR _dest) {
 			size_t pos = m_str.find (_src);
-			while (pos != string_t::npos) {
+			while (pos != _npos) {
 				m_str [pos] = _src;
 				pos = m_str.find (_src);
 			}
 			return *this;
 		}
+
+		// 字符串基本方法
+		bool empty () const { return m_str.empty (); }
+		void clear () { m_str.clear (); }
+		void free () { string_t _str = _T (""); _str.swap (m_str); }
+		size_t size () const { return m_str.size (); }
+		TCHAR &operator[] (size_t n) { return m_str [n]; }
+		const TCHAR *c_str () const { return m_str.c_str (); }
+		const string_t &str () const { return m_str; }
+		string_view_t str_view () const { return string_view_t (m_str); }
+		std::string stra () const { return Encoding::T_to_gb18030 (m_str); }
+		std::wstring strw () const { return Encoding::T_to_utf16 (m_str); }
+		const TCHAR *operator() () { return m_str.c_str (); }
+
 		//
 		std::vector<String> split (TCHAR _sp = _T (' '), bool no_empty = true) {
 			size_t start = 0, start_find = 0;
 			std::vector<String> v;
 			while (start_find < m_str.size ()) {
 				size_t p = m_str.find (_sp, start_find);
-				if (p == string_t::npos) p = m_str.size ();
+				if (p == _npos) p = m_str.size ();
 				if (!no_empty || p > start)
 					v.push_back (m_str.substr (start, p - start));
 				start = start_find = p + 1;
@@ -483,7 +704,7 @@ namespace faw {
 			std::vector<String> v;
 			while (start_find < m_str.size ()) {
 				size_t p = m_str.find (_sp, start_find);
-				if (p == string_t::npos) p = m_str.size ();
+				if (p == _npos) p = m_str.size ();
 				if (!no_empty || p > start)
 					v.push_back (m_str.substr (start, p - start));
 				start = start_find = p + _sp.size ();
@@ -585,11 +806,44 @@ namespace faw {
 			}
 			return str_result;
 		}
-		static size_t npos;
+		static size_t _npos;
 
 	private:
+		// flag专用，用于提取flag信息
+		static std::tuple<double, size_t, flag> _get_flag_info (flag &_f) {
+			static std::map<flag, double> m_dot { { flag::decimal_0, 0 }, { flag::decimal_1, 0.1 }, { flag::decimal_2, 0.01 }, { flag::decimal_3, 0.001 }, { flag::decimal_4, 0.0001 }, { flag::decimal_5, 0.00001 }, { flag::decimal_6, 0.000001 }, { flag::decimal_7, 0.0000001 }, { flag::decimal_8, 0.00000001 }, { flag::decimal_9, 0.000000001 }, { flag::whole_10, 10 }, { flag::whole_100, 100 }, { flag::whole_1k, 1000 }, { flag::whole_10k, 10000 }, { flag::whole_100k, 100000 }, { flag::whole_1m, 1000000 } };
+			//
+			double _dot = 0;
+			if (m_dot.find ((flag) (((size_t) _f) & 0x000f0000)) != m_dot.end ())
+				_dot = m_dot [(flag) (((size_t) _f) & 0x000f0000)];
+			size_t _width = ((size_t) _f) & 0x0000ffff;
+			flag _align = (flag) (((size_t) _f) & ((size_t) flag::_align));
+			_align = (_align == flag::_align ? flag::align_right : _align);
+			_f = flag::none;
+			return std::make_tuple (_dot, _width, _align);
+		}
+		// flag专用，用于获取padding字符串
+		static std::tuple<string_t, string_t> _get_flag_space (size_t _width, flag _align, size_t _src_width = 1) {
+			size_t _left_count = 0, _right_count = 0;
+			if (_align == flag::align_right && _width > _src_width) {
+				_left_count = _width - _src_width;
+			} else if (_align == flag::align_middle && _width > _src_width) {
+				_left_count = (_width - _src_width) / 2;
+			}
+			if (_align == flag::align_left && _width > _src_width) {
+				_right_count = _width - _src_width;
+			} else if (_align == flag::align_middle && _width > _src_width) {
+				_right_count = _width - _src_width - _left_count;
+			}
+			string_t _left (_left_count, _T (' ')), _right (_right_count, _T (' '));
+			return std::make_tuple (_left, _right);
+		}
+
 		string_t m_str;
+		flag m_last_flag = flag::none;
 	};
+
+	__declspec (selectany) size_t String::_npos = string_t::npos;
 }
 
 #if _HAS_CXX17
