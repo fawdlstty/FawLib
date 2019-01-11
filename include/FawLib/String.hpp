@@ -6,7 +6,7 @@
 // Author:      Fawdlstty
 // Author URI:  https://www.fawdlstty.com/
 // License:     MIT
-// Last Update: Jan 09, 2019
+// Last Update: Jan 12, 2019
 //
 ////////////////////////////////////////////////////////////////////////////////
 
@@ -68,8 +68,8 @@ namespace faw {
 		String (const std::string &_s): m_str (Encoding::gb18030_to_T (std::string_view (_s))) {}
 		String (const std::wstring &_s): m_str (Encoding::utf16_to_T (std::wstring_view (_s))) {}
 #if _HAS_CXX17
-		String (const std::string_view &_s): m_str (Encoding::gb18030_to_T (_s)) {}
-		String (const std::wstring_view &_s): m_str (Encoding::utf16_to_T (_s)) {}
+		String (const std::string_view _s): m_str (Encoding::gb18030_to_T (_s)) {}
+		String (const std::wstring_view _s): m_str (Encoding::utf16_to_T (_s)) {}
 #endif
 		String (const String &_s): m_str (_s.m_str) {}
 		String (const String *_s): m_str (_s->m_str) {}
@@ -231,12 +231,10 @@ namespace faw {
 			size_t _width = 0;
 			flag _align = flag::align_right;
 			std::tie (_dot, _width, _align) = _get_flag_info (m_last_flag);
-			string_t _left, _right;
-			std::tie (_left, _right) = _get_flag_space (_width, _align);
 			//
-			m_str += _left;
-			m_str.push_back (n);
-			m_str += _right;
+			string_t _str (1, n);
+			_make_flag_space (_width, _align, _str);
+			m_str += _str;
 			return *this;
 		}
 		friend String &operator>> (TCHAR n, String &_o) {
@@ -244,12 +242,10 @@ namespace faw {
 			size_t _width = 0;
 			flag _align = flag::align_right;
 			std::tie (_dot, _width, _align) = _get_flag_info (_o.m_last_flag);
-			string_t _left, _right;
-			std::tie (_left, _right) = _get_flag_space (_width, _align);
 			//
-			_left += n;
-			_left += _right;
-			_o.m_str.insert (_o.m_str.begin (), _left.begin (), _left.end ());
+			string_t _str (1, n);
+			_make_flag_space (_width, _align, _str);
+			_o.m_str.insert (_o.m_str.begin (), _str.begin (), _str.end ());
 			return _o;
 		}
 		friend String &operator<< (TCHAR &n, String &_o) {
@@ -279,33 +275,25 @@ namespace faw {
 			return *this;
 		}
 		String &operator<< (int n) {
-			String _tmp = String::format (_T ("%d"), n);
-			//
 			double _dot = 0;
 			size_t _width = 0;
 			flag _align = flag::align_right;
 			std::tie (_dot, _width, _align) = _get_flag_info (m_last_flag);
-			string_t _left, _right;
-			std::tie (_left, _right) = _get_flag_space (_width, _align, _tmp.size ());
 			//
-			m_str += _left;
+			String _tmp = String::format (_T ("%d"), n);
+			_make_flag_space (_width, _align, _tmp.m_str);
 			m_str += _tmp.m_str;
-			m_str += _right;
 			return *this;
 		}
 		friend String &operator>> (int n, String &_o) {
-			String _tmp = String::format (_T ("%d"), n);
-			//
 			double _dot = 0;
 			size_t _width = 0;
 			flag _align = flag::align_right;
 			std::tie (_dot, _width, _align) = _get_flag_info (_o.m_last_flag);
-			string_t _left, _right;
-			std::tie (_left, _right) = _get_flag_space (_width, _align);
 			//
-			_left += _tmp.m_str;
-			_left += _right;
-			_o.m_str.insert (_o.m_str.begin (), _left.begin (), _left.end ());
+			String _tmp = String::format (_T ("%d"), n);
+			_make_flag_space (_width, _align, _tmp.m_str);
+			_o.m_str.insert (_o.m_str.begin (), _tmp.m_str.begin (), _tmp.m_str.end ());
 			return _o;
 		}
 		friend String &operator<< (int &n, String &_o) {
@@ -336,33 +324,25 @@ namespace faw {
 			return *this;
 		}
 		String &operator<< (unsigned int n) {
-			String _tmp = String::format (_T ("%u"), n);
-			//
 			double _dot = 0;
 			size_t _width = 0;
 			flag _align = flag::align_right;
 			std::tie (_dot, _width, _align) = _get_flag_info (m_last_flag);
-			string_t _left, _right;
-			std::tie (_left, _right) = _get_flag_space (_width, _align, _tmp.size ());
 			//
-			m_str += _left;
+			String _tmp = String::format (_T ("%u"), n);
+			_make_flag_space (_width, _align, _tmp.m_str);
 			m_str += _tmp.m_str;
-			m_str += _right;
 			return *this;
 		}
 		friend String &operator>> (unsigned int n, String &_o) {
-			String _tmp = String::format (_T ("%u"), n);
-			//
 			double _dot = 0;
 			size_t _width = 0;
 			flag _align = flag::align_right;
 			std::tie (_dot, _width, _align) = _get_flag_info (_o.m_last_flag);
-			string_t _left, _right;
-			std::tie (_left, _right) = _get_flag_space (_width, _align);
 			//
-			_left += _tmp.m_str;
-			_left += _right;
-			_o.m_str.insert (_o.m_str.begin (), _left.begin (), _left.end ());
+			String _tmp = String::format (_T ("%u"), n);
+			_make_flag_space (_width, _align, _tmp.m_str);
+			_o.m_str.insert (_o.m_str.begin (), _tmp.m_str.begin (), _tmp.m_str.end ());
 			return _o;
 		}
 		friend String &operator<< (unsigned int &n, String &_o) {
@@ -401,13 +381,10 @@ namespace faw {
 			size_t _width = 0;
 			flag _align = flag::align_right;
 			std::tie (_dot, _width, _align) = _get_flag_info (m_last_flag);
-			String _tmp = String::format (String::format (_T ("%%.%df"), _dot).c_str (), n);
-			string_t _left, _right;
-			std::tie (_left, _right) = _get_flag_space (_width, _align, _tmp.size ());
 			//
-			m_str += _left;
+			String _tmp = String::format (String::format (_T ("%%.%df"), _dot).c_str (), n);
+			_make_flag_space (_width, _align, _tmp.m_str);
 			m_str += _tmp.m_str;
-			m_str += _right;
 			return *this;
 		}
 		friend String &operator>> (float n, String &_o) {
@@ -415,13 +392,10 @@ namespace faw {
 			size_t _width = 0;
 			flag _align = flag::align_right;
 			std::tie (_dot, _width, _align) = _get_flag_info (_o.m_last_flag);
-			String _tmp = String::format (String::format (_T ("%%.%df"), _dot).c_str (), n);
-			string_t _left, _right;
-			std::tie (_left, _right) = _get_flag_space (_width, _align, _tmp.size ());
 			//
-			_left += _tmp.m_str;
-			_left += _right;
-			_o.m_str.insert (_o.m_str.begin (), _left.begin (), _left.end ());
+			String _tmp = String::format (String::format (_T ("%%.%df"), _dot).c_str (), n);
+			_make_flag_space (_width, _align, _tmp.m_str);
+			_o.m_str.insert (_o.m_str.begin (), _tmp.m_str.begin (), _tmp.m_str.end ());
 			return _o;
 		}
 		friend String &operator<< (float &n, String &_o) {
@@ -474,13 +448,10 @@ namespace faw {
 			size_t _width = 0;
 			flag _align = flag::align_right;
 			std::tie (_dot, _width, _align) = _get_flag_info (m_last_flag);
-			String _tmp = String::format (String::format (_T ("%%.%dlf"), _dot).c_str (), n);
-			string_t _left, _right;
-			std::tie (_left, _right) = _get_flag_space (_width, _align, _tmp.size ());
 			//
-			m_str += _left;
+			String _tmp = String::format (String::format (_T ("%%.%dlf"), _dot).c_str (), n);
+			_make_flag_space (_width, _align, _tmp.m_str);
 			m_str += _tmp.m_str;
-			m_str += _right;
 			return *this;
 		}
 		friend String &operator>> (double n, String &_o) {
@@ -488,13 +459,10 @@ namespace faw {
 			size_t _width = 0;
 			flag _align = flag::align_right;
 			std::tie (_dot, _width, _align) = _get_flag_info (_o.m_last_flag);
-			String _tmp = String::format (String::format (_T ("%%.%dlf"), _dot).c_str (), n);
-			string_t _left, _right;
-			std::tie (_left, _right) = _get_flag_space (_width, _align, _tmp.size ());
 			//
-			_left += _tmp.m_str;
-			_left += _right;
-			_o.m_str.insert (_o.m_str.begin (), _left.begin (), _left.end ());
+			String _tmp = String::format (String::format (_T ("%%.%dlf"), _dot).c_str (), n);
+			_make_flag_space (_width, _align, _tmp.m_str);
+			_o.m_str.insert (_o.m_str.begin (), _tmp.m_str.begin (), _tmp.m_str.end ());
 			return _o;
 		}
 		friend String &operator<< (double &n, String &_o) {
@@ -521,48 +489,168 @@ namespace faw {
 			_o.m_str.erase (_o.m_str.begin (), _o.m_str.begin () + i);
 			return _o;
 		}
-		String &operator<< (String &_s) {
+		friend std::ostream &operator<< (std::ostream &_stm, String &_s) { _stm << _s.stra (); return _stm; }
+		friend std::wostream &operator<< (std::wostream &_stm, String &_s) { _stm << _s.strw (); return _stm; }
+		String &operator<< (const char *_s) {
 			double _dot = 0;
 			size_t _width = 0;
 			flag _align = flag::align_right;
 			std::tie (_dot, _width, _align) = _get_flag_info (m_last_flag);
-			string_t _left, _right;
-			std::tie (_left, _right) = _get_flag_space (_width, _align, _s.size ());
 			//
-			m_str += _left;
-			m_str += _s.m_str;
-			m_str += _right;
+			String _s2 (_s);
+			_make_flag_space (_width, _align, _s2.m_str);
+			m_str += _s2.m_str;
 			return *this;
 		}
-		String &operator>> (String &_s) {
+		friend String &operator>> (const char *_s, String &_o) {
 			double _dot = 0;
 			size_t _width = 0;
 			flag _align = flag::align_right;
-			std::tie (_dot, _width, _align) = _get_flag_info (_s.m_last_flag);
-			string_t _left, _right;
-			std::tie (_left, _right) = _get_flag_space (_width, _align, size ());
+			std::tie (_dot, _width, _align) = _get_flag_info (_o.m_last_flag);
 			//
-			_s.m_str += _left;
-			_s.m_str += m_str;
-			_s.m_str += _right;
+			String _s2 (_s);
+			_make_flag_space (_width, _align, _s2.m_str);
+			_o.m_str.insert (_o.m_str.begin (), _s2.m_str.begin (), _s2.m_str.end ());
+			return _o;
+		}
+		String &operator<< (const wchar_t *_s) {
+			double _dot = 0;
+			size_t _width = 0;
+			flag _align = flag::align_right;
+			std::tie (_dot, _width, _align) = _get_flag_info (m_last_flag);
+			//
+			String _s2 (_s);
+			_make_flag_space (_width, _align, _s2.m_str);
+			m_str += _s2.m_str;
 			return *this;
 		}
-		friend std::ostream &operator<< (std::ostream &_stm, String &_s) { _stm << _s.stra (); return _stm; }
-		friend std::wostream &operator<< (std::wostream &_stm, String &_s) { _stm << _s.strw (); return _stm; }
+		friend String &operator>> (const wchar_t *_s, String &_o) {
+			double _dot = 0;
+			size_t _width = 0;
+			flag _align = flag::align_right;
+			std::tie (_dot, _width, _align) = _get_flag_info (_o.m_last_flag);
+			//
+			String _s2 (_s);
+			_make_flag_space (_width, _align, _s2.m_str);
+			_o.m_str.insert (_o.m_str.begin (), _s2.m_str.begin (), _s2.m_str.end ());
+			return _o;
+		}
+		String &operator<< (std::string &_s) {
+			double _dot = 0;
+			size_t _width = 0;
+			flag _align = flag::align_right;
+			std::tie (_dot, _width, _align) = _get_flag_info (m_last_flag);
+			//
+			String _s2 (_s);
+			_make_flag_space (_width, _align, _s2.m_str);
+			m_str += _s2.m_str;
+			return *this;
+		}
+		friend String &operator>> (std::string &_s, String &_o) {
+			double _dot = 0;
+			size_t _width = 0;
+			flag _align = flag::align_right;
+			std::tie (_dot, _width, _align) = _get_flag_info (_o.m_last_flag);
+			//
+			String _s2 (_s);
+			_make_flag_space (_width, _align, _s2.m_str);
+			_o.m_str.insert (_o.m_str.begin (), _s2.m_str.begin (), _s2.m_str.end ());
+			return _o;
+		}
+		String &operator<< (std::wstring &_s) {
+			double _dot = 0;
+			size_t _width = 0;
+			flag _align = flag::align_right;
+			std::tie (_dot, _width, _align) = _get_flag_info (m_last_flag);
+			//
+			String _s2 (_s);
+			_make_flag_space (_width, _align, _s2.m_str);
+			m_str += _s2.m_str;
+			return *this;
+		}
+		friend String &operator>> (std::wstring &_s, String &_o) {
+			double _dot = 0;
+			size_t _width = 0;
+			flag _align = flag::align_right;
+			std::tie (_dot, _width, _align) = _get_flag_info (_o.m_last_flag);
+			//
+			String _s2 (_s);
+			_make_flag_space (_width, _align, _s2.m_str);
+			_o.m_str.insert (_o.m_str.begin (), _s2.m_str.begin (), _s2.m_str.end ());
+			return _o;
+		}
+#if _HAS_CXX17
+		String &operator<< (std::string_view &_s) {
+			double _dot = 0;
+			size_t _width = 0;
+			flag _align = flag::align_right;
+			std::tie (_dot, _width, _align) = _get_flag_info (m_last_flag);
+			//
+			String _s2 (_s);
+			_make_flag_space (_width, _align, _s2.m_str);
+			m_str += _s2.m_str;
+			return *this;
+		}
+		friend String &operator>> (std::string_view &_s, String &_o) {
+			double _dot = 0;
+			size_t _width = 0;
+			flag _align = flag::align_right;
+			std::tie (_dot, _width, _align) = _get_flag_info (_o.m_last_flag);
+			//
+			String _s2 (_s);
+			_make_flag_space (_width, _align, _s2.m_str);
+			_o.m_str.insert (_o.m_str.begin (), _s2.m_str.begin (), _s2.m_str.end ());
+			return _o;
+		}
+		String &operator<< (std::wstring_view &_s) {
+			double _dot = 0;
+			size_t _width = 0;
+			flag _align = flag::align_right;
+			std::tie (_dot, _width, _align) = _get_flag_info (m_last_flag);
+			//
+			String _s2 (_s);
+			_make_flag_space (_width, _align, _s2.m_str);
+			m_str += _s2.m_str;
+			return *this;
+		}
+		friend String &operator>> (std::wstring_view &_s, String &_o) {
+			double _dot = 0;
+			size_t _width = 0;
+			flag _align = flag::align_right;
+			std::tie (_dot, _width, _align) = _get_flag_info (_o.m_last_flag);
+			//
+			String _s2 (_s);
+			_make_flag_space (_width, _align, _s2.m_str);
+			_o.m_str.insert (_o.m_str.begin (), _s2.m_str.begin (), _s2.m_str.end ());
+			return _o;
+		}
+#endif
 
 		// 字符串查找
 		size_t find (TCHAR _ch, size_t _off = 0) { return m_str.find (_ch, _off); }
 		size_t rfind (TCHAR _ch, size_t _off = 0) { return m_str.rfind (_ch, _off); }
 #ifdef _UNICODE
+		size_t find (std::string &_s, size_t _off = 0) { return find (Encoding::gb18030_to_utf16 (_s), _off); }
+		size_t find (std::wstring &_s, size_t _off = 0) { return m_str.find (_s, _off); }
+		size_t rfind (std::string &_s, size_t _off = 0) { return rfind (Encoding::gb18030_to_utf16 (_s), _off); }
+		size_t rfind (std::wstring &_s, size_t _off = 0) { return m_str.rfind (_s, _off); }
+#	if _HAS_CXX17
 		size_t find (std::string_view _s, size_t _off = 0) { return find (Encoding::gb18030_to_utf16 (_s), _off); }
 		size_t find (std::wstring_view _s, size_t _off = 0) { return m_str.find (_s, _off); }
 		size_t rfind (std::string_view _s, size_t _off = 0) { return rfind (Encoding::gb18030_to_utf16 (_s), _off); }
 		size_t rfind (std::wstring_view _s, size_t _off = 0) { return m_str.rfind (_s, _off); }
+#	endif
 #else
+		size_t find (std::string &_s, size_t _off = 0) { return find (_s, _off); }
+		size_t find (std::wstring &_s, size_t _off = 0) { return m_str.find (Encoding::utf16_to_gb18030 (_s), _off); }
+		size_t rfind (std::string &_s, size_t _off = 0) { return rfind (_s, _off); }
+		size_t rfind (std::wstring &_s, size_t _off = 0) { return m_str.rfind (Encoding::utf16_to_gb18030 (_s), _off); }
+#	if _HAS_CXX17
 		size_t find (std::string_view _s, size_t _off = 0) { return find (_s, _off); }
 		size_t find (std::wstring_view _s, size_t _off = 0) { return m_str.find (Encoding::utf16_to_gb18030 (_s), _off); }
 		size_t rfind (std::string_view _s, size_t _off = 0) { return rfind (_s, _off); }
 		size_t rfind (std::wstring_view _s, size_t _off = 0) { return m_str.rfind (Encoding::utf16_to_gb18030 (_s), _off); }
+#	endif
 #endif
 
 		// 字符串处理（生成新字符串）
@@ -681,7 +769,9 @@ namespace faw {
 		TCHAR &operator[] (size_t n) { return m_str [n]; }
 		const TCHAR *c_str () const { return m_str.c_str (); }
 		const string_t &str () const { return m_str; }
+#if _HAS_CXX17
 		string_view_t str_view () const { return string_view_t (m_str); }
+#endif
 		std::string stra () const { return Encoding::T_to_gb18030 (m_str); }
 		std::wstring strw () const { return Encoding::T_to_utf16 (m_str); }
 		const TCHAR *operator() () { return m_str.c_str (); }
@@ -823,20 +913,20 @@ namespace faw {
 			return std::make_tuple (_dot, _width, _align);
 		}
 		// flag专用，用于获取padding字符串
-		static std::tuple<string_t, string_t> _get_flag_space (size_t _width, flag _align, size_t _src_width = 1) {
+		static void _make_flag_space (size_t _width, flag _align, string_t &_src) {
 			size_t _left_count = 0, _right_count = 0;
-			if (_align == flag::align_right && _width > _src_width) {
-				_left_count = _width - _src_width;
-			} else if (_align == flag::align_middle && _width > _src_width) {
-				_left_count = (_width - _src_width) / 2;
+			if (_align == flag::align_right && _width > _src.size ()) {
+				_left_count = _width - _src.size ();
+			} else if (_align == flag::align_middle && _width > _src.size ()) {
+				_left_count = (_width - _src.size ()) / 2;
 			}
-			if (_align == flag::align_left && _width > _src_width) {
-				_right_count = _width - _src_width;
-			} else if (_align == flag::align_middle && _width > _src_width) {
-				_right_count = _width - _src_width - _left_count;
+			if (_align == flag::align_left && _width > _src.size ()) {
+				_right_count = _width - _src.size ();
+			} else if (_align == flag::align_middle && _width > _src.size ()) {
+				_right_count = _width - _src.size () - _left_count;
 			}
-			string_t _left (_left_count, _T (' ')), _right (_right_count, _T (' '));
-			return std::make_tuple (_left, _right);
+			_src.insert (_src.begin (), _left_count, _T (' '));
+			_src.insert (_src.end (), _right_count, _T (' '));
 		}
 
 		string_t m_str;
