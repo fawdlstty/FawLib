@@ -155,6 +155,21 @@ for (auto c: s1) {
 }
 ```
 
-然后是字符串流的处理。这部分比较有意思的地方在于，很容易实现浮点数等的转换。另外规则是，<<、>>指向代表数据流动方向，faw::String对象在数据流运算的左侧、右侧分别代表对字符串最前、最后的操作。
+然后是字符串流的处理。这部分比较有意思的地方在于，很容易实现浮点数等的转换。另外规则是，<<、>>指向代表数据流动方向，faw::String对象在数据流运算的左侧、右侧分别代表对字符串最前、最后的操作。其中两个faw::String字符串类型的流运算很容易出现歧义，因此两个这种字符串类型就不能使用流运算符。
+```
+faw::String s1 = "12abc";
+s1 << _T ('d'); // 此时字符串内容为 12abcd
+_T ('-') >> s1; // 此时字符串内容为 -12abcd
+s1 << "123"; // 此时字符串内容为 -12abcd123
+int i = 0;
+s1 >> i; // 此时字符串内容为 -12abcd，i内容为123
+i << s1; // 此时字符串内容为 abcd，i内容为-12
+```
 
-未完待续。。。
+然后是一些零散的函数，部分源于STL，不过删掉了很多几乎没用的重载函数；其他的用法也很像其他高级语言。杂项函数有：
+1. 查找函数：find、rfind
+2. 生成新字符串函数：trim_left、trim_right、trim、upper、lower、reverse、replace
+3. 修改自身字符串函数：trim_left_self、trim_right_self、trim_self、upper_self、lower_self、reverse_self、replace_self
+4. 字符串其他基本方法：empty、clear、free、size、operator[]、c_str、str（返回string_t&）、str_view（返回string_view_t）、stra（返回std::string）、strw（返回std::wstring）、match_regex（传入正则就可以返回匹配内容）
+5. split（传入分隔符，返回std::vector&lt;faw::String&gt;）
+6. 静态函数format，用于生成一个新的faw::String字符串。
