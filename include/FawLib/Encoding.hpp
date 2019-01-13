@@ -51,6 +51,7 @@
 
 namespace faw {
 	class Encoding {
+		Encoding () {}
 	public:
 		// 编码猜测
 		static std::string guess (std::string_view data) {

@@ -15,7 +15,11 @@
 
 
 
+#include "Encoding.hpp"
 #include "String.hpp"
+#include "SetupHelper.hpp"
+#include "Register.hpp"
+#include "Directory.hpp"
 
 
 
