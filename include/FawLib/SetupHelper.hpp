@@ -6,7 +6,7 @@
 // Author:      Fawdlstty
 // Author URI:  https://www.fawdlstty.com/
 // License:     MIT
-// Last Update: Jan 13, 2019
+// Last Update: Jan 16, 2019
 //
 ////////////////////////////////////////////////////////////////////////////////
 
@@ -21,6 +21,7 @@
 #include "String.hpp"
 #include "Register.hpp"
 #include "Directory.hpp"
+#include "File.hpp"
 #include "unzip.h"
 
 
@@ -28,7 +29,7 @@
 namespace faw {
 	class SetupHelper {
 	public:
-		SetupHelper (LPCTSTR _app_guid): m_app_guid (_app_guid) {}
+		SetupHelper (LPCTSTR _app_name): m_app_name (_app_name) {}
 
 		// 资源压缩包解压缩（zip压缩文件）
 		size_t install_uncompress (HINSTANCE hInstance, LPCTSTR _resType, LPCTSTR _resId, LPCTSTR _destPath, LPCSTR _zipPwd = nullptr) {
@@ -53,6 +54,8 @@ namespace faw {
 								if (!Directory::exist (_tmp.c_str ()))
 									Directory::create (_tmp.c_str (), ze.attr);
 							} else {
+								if (File::exist (_tmp.c_str ()))
+									File::remove (_tmp.c_str ());
 								UnzipItem (hZip, i, _tmp.c_str ());
 								ze.attr &= (FILE_ATTRIBUTE_READONLY | FILE_ATTRIBUTE_HIDDEN | FILE_ATTRIBUTE_SYSTEM | FILE_ATTRIBUTE_ARCHIVE | FILE_ATTRIBUTE_DEVICE | FILE_ATTRIBUTE_NORMAL);
 								if (ze.attr)
@@ -78,7 +81,7 @@ namespace faw {
 		}
 
 	private:
-		string_t m_app_guid = _T ("");
+		string_t m_app_name = _T ("");
 	};
 }
 
