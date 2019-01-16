@@ -15,6 +15,7 @@
 
 
 
+#include <string>
 #include <Windows.h>
 
 
@@ -35,6 +36,38 @@ namespace faw {
 					::SetFileAttributes (_path, _attr);
 			}
 			return bRet;
+		}
+		static std::string get_subpath (std::string_view _path) {
+			size_t p = _path.rfind ('/'), q = _path.rfind ('\\');
+			if ((p < q && q != std::string::npos) || p == std::string::npos)
+				p = q;
+			if (p == std::string::npos)
+				return "";
+			return std::string (_path.substr (0, p));
+		}
+		static std::wstring get_subpath (std::wstring_view _path) {
+			size_t p = _path.rfind (L'/'), q = _path.rfind (L'\\');
+			if ((p < q && q != std::wstring::npos) || p == std::wstring::npos)
+				p = q;
+			if (p == std::wstring::npos)
+				return L"";
+			return std::wstring (_path.substr (0, p));
+		}
+		static std::string get_filename (std::string_view _path) {
+			size_t p = _path.rfind ('/'), q = _path.rfind ('\\');
+			if ((p < q && q != std::string::npos) || p == std::string::npos)
+				p = q;
+			if (p == std::string::npos)
+				return std::string (_path);
+			return std::string (_path.substr (p + 1));
+		}
+		static std::wstring get_filename (std::wstring_view _path) {
+			size_t p = _path.rfind (L'/'), q = _path.rfind (L'\\');
+			if ((p < q && q != std::wstring::npos) || p == std::wstring::npos)
+				p = q;
+			if (p == std::wstring::npos)
+				return std::wstring (_path);
+			return std::wstring (_path.substr (p + 1));
 		}
 	};
 }
