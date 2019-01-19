@@ -18,6 +18,8 @@
 #include <string>
 #include <Windows.h>
 
+#include "String.hpp"
+
 
 
 namespace faw {
@@ -37,37 +39,50 @@ namespace faw {
 			}
 			return bRet;
 		}
-		static std::string get_subpath (std::string_view _path) {
-			size_t p = _path.rfind ('/'), q = _path.rfind ('\\');
-			if ((p < q && q != std::string::npos) || p == std::string::npos)
-				p = q;
-			if (p == std::string::npos)
-				return "";
-			return std::string (_path.substr (0, p));
+		static String get_subpath (String _path) {
+			size_t _p = _path.rfind_any ({ _T ('/'), _T ('\\') });
+			if (_p == _path.size () - 1) {
+				_path.left_self (_path.size () - 1);
+				_p = _path.rfind_any ({ _T ('/'), _T ('\\') });
+			}
+			if (_p == String::_npos)
+				return _T ("");
+			return _path.substr (0, _p + 1);
 		}
-		static std::wstring get_subpath (std::wstring_view _path) {
-			size_t p = _path.rfind (L'/'), q = _path.rfind (L'\\');
-			if ((p < q && q != std::wstring::npos) || p == std::wstring::npos)
-				p = q;
-			if (p == std::wstring::npos)
-				return L"";
-			return std::wstring (_path.substr (0, p));
+		static String get_filename (String _path) {
+			size_t _p = _path.rfind_any ({ _T ('/'), _T ('\\') });
+			if (_p == String::_npos)
+				return _path;
+			return _path.substr (_p + 1);
 		}
-		static std::string get_filename (std::string_view _path) {
-			size_t p = _path.rfind ('/'), q = _path.rfind ('\\');
-			if ((p < q && q != std::string::npos) || p == std::string::npos)
-				p = q;
-			if (p == std::string::npos)
-				return std::string (_path);
-			return std::string (_path.substr (p + 1));
+		static String get_last_folder (String _path) {
+			size_t _p = _path.rfind_any ({ _T ('/'), _T ('\\') });
+			if (_p == _path.size () - 1) {
+				_path.left_self (_path.size () - 1);
+				_p = _path.rfind_any ({ _T ('/'), _T ('\\') });
+			}
+			if (_p == String::_npos)
+				return _path;
+			return _path.substr (_p + 1);
 		}
-		static std::wstring get_filename (std::wstring_view _path) {
-			size_t p = _path.rfind (L'/'), q = _path.rfind (L'\\');
-			if ((p < q && q != std::wstring::npos) || p == std::wstring::npos)
-				p = q;
-			if (p == std::wstring::npos)
-				return std::wstring (_path);
-			return std::wstring (_path.substr (p + 1));
+		static String get_current_file () {
+			String _s { ::GetCommandLine () };
+			TCHAR _end_ch = _T (' ');
+			if (_s[0] == _T ('"'))
+				_end_ch << _s;
+			return _s.left (_s.find (_end_ch));
+		}
+		static String get_current_path () {
+			String _s = get_current_file ();
+			size_t _p = _s.rfind_any ({ _T ('/'), _T ('\\') });
+			return _s.left (_p + 1);
+		}
+		static String append_folder (String _path, String _folder) {
+			String s { _path };
+			if (s.find_any ({ _T ('/'), _T ('\\') }) != s.size () - 1)
+				s += _T ('\\');
+			s += _folder;
+			return s;
 		}
 	};
 }

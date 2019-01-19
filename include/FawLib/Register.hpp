@@ -38,12 +38,12 @@ namespace faw {
 		}
 		static bool set_path (std::wstring path, std::wstring data, bool expand = false) {
 			HKEY main_key = parse_path (path);
-			return (ERROR_SUCCESS == ::RegSetValueExW (main_key, path.c_str (), 0, (expand ? REG_EXPAND_SZ : REG_SZ), (BYTE*) &data[0], (DWORD) data.size ()));
+			return (ERROR_SUCCESS == ::RegSetValueW (main_key, path.c_str (), (expand ? REG_EXPAND_SZ : REG_SZ), &data [0], (DWORD) data.size ()));
 		}
 		static bool set_path (std::wstring path, std::vector<std::wstring> data) {
 			HKEY main_key = parse_path (path);
 			std::wstring s = make_multi_sz (data);
-			return (ERROR_SUCCESS == ::RegSetValueExW (main_key, path.c_str (), 0, REG_MULTI_SZ, (BYTE*) &s[0], (DWORD) s.size ()));
+			return (ERROR_SUCCESS == ::RegSetValueW (main_key, path.c_str (), REG_MULTI_SZ, &s [0], (DWORD) s.size ()));
 		}
 
 		// 创建/设置key的值
@@ -57,14 +57,14 @@ namespace faw {
 		static bool set_key (std::wstring path, std::wstring key_name, DWORD data) {
 			HKEY hKey = parse_path (path);
 			if (ERROR_SUCCESS != ::RegOpenKeyExW (hKey, path.c_str (), 0, KEY_WRITE, &hKey)) return false;
-			bool bRet = (ERROR_SUCCESS == ::RegSetValueExW (hKey, key_name.c_str (), 0, REG_BINARY, (BYTE*) &data, sizeof (data)));
+			bool bRet = (ERROR_SUCCESS == ::RegSetValueExW (hKey, key_name.c_str (), 0, REG_DWORD, (BYTE*) &data, sizeof (data)));
 			::RegCloseKey (hKey);
 			return bRet;
 		}
 		static bool set_key (std::wstring path, std::wstring key_name, std::wstring data, bool expand = false) {
 			HKEY hKey = parse_path (path);
 			if (ERROR_SUCCESS != ::RegOpenKeyExW (hKey, path.c_str (), 0, KEY_WRITE, &hKey)) return false;
-			bool bRet = (ERROR_SUCCESS == ::RegSetValueExW (hKey, key_name.c_str (), 0, (expand ? REG_EXPAND_SZ : REG_SZ), (BYTE*) &data[0], (DWORD) data.size ()));
+			bool bRet = (ERROR_SUCCESS == ::RegSetValueExW (hKey, key_name.c_str (), 0, (expand ? REG_EXPAND_SZ : REG_SZ), (BYTE*) &data [0], (DWORD) data.size () * sizeof (wchar_t)));
 			::RegCloseKey (hKey);
 			return bRet;
 		}
@@ -72,7 +72,7 @@ namespace faw {
 			HKEY hKey = parse_path (path);
 			if (ERROR_SUCCESS != ::RegOpenKeyExW (hKey, path.c_str (), 0, KEY_WRITE, &hKey)) return false;
 			std::wstring s = make_multi_sz (data);
-			bool bRet = (ERROR_SUCCESS == ::RegSetValueExW (hKey, key_name.c_str (), 0, REG_MULTI_SZ, (BYTE*) &s[0], (DWORD) s.size ()));
+			bool bRet = (ERROR_SUCCESS == ::RegSetValueExW (hKey, key_name.c_str (), 0, REG_MULTI_SZ, (BYTE*) &s [0], (DWORD) s.size () * sizeof (wchar_t)));
 			::RegCloseKey (hKey);
 			return bRet;
 		}

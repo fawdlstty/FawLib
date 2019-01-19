@@ -16,6 +16,7 @@
 
 
 #include <iostream>
+#include <initializer_list>
 //#include <iomanip>
 #include <string>
 #include <vector>
@@ -24,6 +25,7 @@
 #include <map>
 #include <cstdint>
 #include <algorithm>
+#include <memory>
 #include <tchar.h>
 
 #include "Encoding.hpp"
@@ -143,6 +145,27 @@ namespace faw {
 #if _HAS_CXX17
 		friend bool operator== (const std::string_view _s, String &_o) { return _o == _s; }
 		friend bool operator== (const std::wstring_view _s, String &_o) { return _o == _s; }
+#endif
+		//
+		bool operator!= (const char *_s) { String _o (_s); return m_str != _o.m_str; }
+		bool operator!= (const wchar_t *_s) { String _o (_s); return m_str != _o.m_str; }
+		bool operator!= (const std::string &_s) { String _o (_s); return m_str != _o.m_str; }
+		bool operator!= (const std::wstring &_s) { String _o (_s); return m_str != _o.m_str; }
+		bool operator!= (String &_o) { return m_str != _o.m_str; }
+		bool operator!= (String *_o) { return m_str != _o->m_str; }
+#if _HAS_CXX17
+		bool operator!= (const std::string_view _s) { String _o (_s); return m_str != _o.m_str; }
+		bool operator!= (const std::wstring_view _s) { String _o (_s); return m_str != _o.m_str; }
+#endif
+		//
+		friend bool operator!= (const char *_s, String &_o) { return _o != _s; }
+		friend bool operator!= (const wchar_t *_s, String &_o) { return _o != _s; }
+		friend bool operator!= (const std::string &_s, String &_o) { return _o != _s; }
+		friend bool operator!= (const std::wstring &_s, String &_o) { return _o != _s; }
+		friend bool operator!= (String *_o, String &_o2) { return _o2  != *_o; }
+#if _HAS_CXX17
+		friend bool operator!= (const std::string_view _s, String &_o) { return _o != _s; }
+		friend bool operator!= (const std::wstring_view _s, String &_o) { return _o != _s; }
 #endif
 		//
 		bool is_equal (const char *_s) { return operator== (_s); }
@@ -628,7 +651,7 @@ namespace faw {
 
 		// 字符串查找
 		size_t find (TCHAR _ch, size_t _off = 0) { return m_str.find (_ch, _off); }
-		size_t rfind (TCHAR _ch, size_t _off = 0) { return m_str.rfind (_ch, _off); }
+		size_t rfind (TCHAR _ch, size_t _off = _npos) { return m_str.rfind (_ch, _off); }
 #ifdef _UNICODE
 		size_t find (std::string &_s, size_t _off = 0) { return find (Encoding::gb18030_to_utf16 (_s), _off); }
 		size_t find (std::wstring &_s, size_t _off = 0) { return m_str.find (_s, _off); }
@@ -652,6 +675,54 @@ namespace faw {
 		size_t rfind (std::wstring_view _s, size_t _off = 0) { return m_str.rfind (Encoding::utf16_to_gb18030 (_s), _off); }
 #	endif
 #endif
+		size_t find_any (std::initializer_list<TCHAR> _cs) {
+			size_t _ret = _npos;
+			for (auto &_c : _cs) {
+				size_t _n = find (_c);
+				_ret = (_ret == _npos || (_n != _npos && _n < _ret) ? _n : _ret);
+			}
+			return _ret;
+		}
+		size_t find_any (std::initializer_list<std::string> _ss) {
+			size_t _ret = _npos;
+			for (auto &_s : _ss) {
+				size_t _n = find (std::string_view (_s));
+				_ret = (_ret == _npos || (_n != _npos && _n < _ret) ? _n : _ret);
+			}
+			return _ret;
+		}
+		size_t find_any (std::initializer_list<std::wstring> _ss) {
+			size_t _ret = _npos;
+			for (auto &_s : _ss) {
+				size_t _n = find (std::wstring_view (_s));
+				_ret = (_ret == _npos || (_n != _npos && _n < _ret) ? _n : _ret);
+			}
+			return _ret;
+		}
+		size_t rfind_any (std::initializer_list<TCHAR> _cs) {
+			size_t _ret = _npos;
+			for (auto &_c : _cs) {
+				size_t _n = rfind (_c);
+				_ret = (_ret == _npos || (_n != _npos && _n > _ret) ? _n : _ret);
+			}
+			return _ret;
+		}
+		size_t rfind_any (std::initializer_list<std::string> _ss) {
+			size_t _ret = _npos;
+			for (auto &_s : _ss) {
+				size_t _n = rfind (std::string_view (_s));
+				_ret = (_ret == _npos || (_n != _npos && _n > _ret) ? _n : _ret);
+			}
+			return _ret;
+		}
+		size_t rfind_any (std::initializer_list<std::wstring> _ss) {
+			size_t _ret = _npos;
+			for (auto &_s : _ss) {
+				size_t _n = rfind (std::wstring_view (_s));
+				_ret = (_ret == _npos || (_n != _npos && _n > _ret) ? _n : _ret);
+			}
+			return _ret;
+		}
 
 		// 字符串处理（生成新字符串）
 		String trim_left () const { String _s (this); _s.m_str.erase (0, _s.m_str.find_first_not_of (_T (' '))); return _s; }
@@ -708,6 +779,9 @@ namespace faw {
 			}
 			return _s;
 		}
+		String left (size_t n) const { return (n >= size () ? str () : str ().substr (0, n)); }
+		String right (size_t n) const { return (n >= size () ? str () : str ().substr (size () - n)); }
+		String substr (size_t begin, size_t len = String::_npos) const { return (begin >= size () ? _T ("") : (begin + len >= size () ? str ().substr (begin) : str ().substr (begin, len))); }
 
 		// 字符串处理（改变自身）
 		String &trim_left_self () { m_str.erase (0, m_str.find_first_not_of (_T (' '))); return *this; }
@@ -760,6 +834,9 @@ namespace faw {
 			}
 			return *this;
 		}
+		String &left_self (size_t n) { m_str = (n >= size () ? str () : str ().substr (0, n)); return *this; }
+		String &right_self (size_t n) { m_str = (n >= size () ? str () : str ().substr (size () - n)); return *this; }
+		String &substr_self (size_t begin, size_t len = String::_npos) { m_str = (begin >= size () ? _T ("") : (begin + len >= size () ? str ().substr (begin) : str ().substr (begin, len))); return *this; }
 
 		// 字符串基本方法
 		bool empty () const { return m_str.empty (); }
