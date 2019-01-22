@@ -18,7 +18,11 @@
 #include <string>
 #include <Windows.h>
 
+#include <DbgHelp.h>
+#pragma comment (lib, "DbgHelp.lib")
+
 #include "String.hpp"
+#include "File.hpp"
 
 
 
@@ -26,16 +30,52 @@ namespace faw {
 	class Directory {
 		Directory () {}
 	public:
-		static bool exist (LPCTSTR _path) {
-			DWORD _attr = ::GetFileAttributes (_path);
+		static bool exist (String _path) {
+			DWORD _attr = ::GetFileAttributes (_path.c_str ());
 			return (_attr != INVALID_FILE_ATTRIBUTES && _attr & FILE_ATTRIBUTE_DIRECTORY);
 		}
-		static bool create (LPCTSTR _path, DWORD _attr = 0) {
-			bool bRet = (exist (_path) ? true : !!::CreateDirectory (_path, NULL));
-			if (bRet) {
+		static void remove (String _path) {
+			if (_path.at (-1) == _T ('/') || _path.at (-1) == _T ('\\'))
+				_path = _path.left (_path.size () - 1);
+			::RemoveDirectory (_path.c_str ());
+		}
+		static void remove_nonempty (String _path) {
+			if (_path.empty ())
+				return;
+			String _path_find = append_folder_or_file (_path, _T ("*"));
+			WIN32_FIND_DATA wfd { 0 };
+			HANDLE hFind = ::FindFirstFile (_path_find.c_str (), &wfd);
+			if (hFind == INVALID_HANDLE_VALUE)
+				return;
+			do {
+				String _dest { wfd.cFileName };
+				if (_dest == _T (".") || _dest == _T (".."))
+					continue;
+				_dest = append_folder_or_file (_path, _dest);
+				if (wfd.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) {
+					remove_nonempty (_dest);
+				} else {
+					File::remove (_dest);
+				}
+			} while (::FindNextFile (hFind, &wfd));
+			remove (_path);
+		}
+		static bool create (String _path, DWORD _attr = 0) {
+			//bool bRet = (exist (_path) ? true : !!::CreateDirectory (_path.c_str (), NULL));
+			//if (bRet) {
+			//	_attr &= (FILE_ATTRIBUTE_READONLY | FILE_ATTRIBUTE_HIDDEN | FILE_ATTRIBUTE_SYSTEM | FILE_ATTRIBUTE_ARCHIVE | FILE_ATTRIBUTE_DEVICE | FILE_ATTRIBUTE_NORMAL);
+			//	if (_attr)
+			//		::SetFileAttributes (_path.c_str (), _attr);
+			//}
+			//return bRet;
+			_path.replace_self (_T ('/'), _T ('\\'));
+			if (_path.at (-1) != _T ('\\'))
+				_path += _T ('\\');
+			bool bRet = !!::MakeSureDirectoryPathExists (_path.stra ().c_str ());
+			if (bRet && _attr) {
+				//DWORD _attr_old = ::GetFileAttributes (_path.c_str ());
 				_attr &= (FILE_ATTRIBUTE_READONLY | FILE_ATTRIBUTE_HIDDEN | FILE_ATTRIBUTE_SYSTEM | FILE_ATTRIBUTE_ARCHIVE | FILE_ATTRIBUTE_DEVICE | FILE_ATTRIBUTE_NORMAL);
-				if (_attr)
-					::SetFileAttributes (_path, _attr);
+				::SetFileAttributes (_path.c_str (), _attr | FILE_ATTRIBUTE_DIRECTORY);
 			}
 			return bRet;
 		}
@@ -77,12 +117,21 @@ namespace faw {
 			size_t _p = _s.rfind_any ({ _T ('/'), _T ('\\') });
 			return _s.left (_p + 1);
 		}
-		static String append_folder (String _path, String _folder) {
+		static String append_folder_or_file (String _path, String _dest) {
 			String s { _path };
-			if (s.find_any ({ _T ('/'), _T ('\\') }) != s.size () - 1)
+			if (s.rfind_any ({ _T ('/'), _T ('\\') }) != s.size () - 1)
 				s += _T ('\\');
-			s += _folder;
+			s += _dest;
 			return s;
+		}
+		static String get_temp_file (String _file) {
+			TCHAR _buf [MAX_PATH], _buf2 [MAX_PATH];
+			_buf [0] = _buf2 [0] = _T ('\0');
+			if (!::GetTempPath (MAX_PATH, _buf))
+				lstrcpy (_buf, _T ("D:\\"));
+			if (!::GetFullPathName (_buf, MAX_PATH, _buf2, nullptr))
+				lstrcpy (_buf2, _T ("D:\\"));
+			return append_folder_or_file (_buf, _file);
 		}
 	};
 }

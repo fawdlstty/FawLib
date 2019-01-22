@@ -829,7 +829,7 @@ namespace faw {
 		String &replace_self (TCHAR _src, TCHAR _dest) {
 			size_t pos = m_str.find (_src);
 			while (pos != _npos) {
-				m_str [pos] = _src;
+				m_str [pos] = _dest;
 				pos = m_str.find (_src);
 			}
 			return *this;
@@ -843,7 +843,15 @@ namespace faw {
 		void clear () { m_str.clear (); }
 		void free () { string_t _str = _T (""); _str.swap (m_str); }
 		size_t size () const { return m_str.size (); }
+		//TCHAR &operator[] (intptr_t n) { n = (n > 0 ? (n < size () ? n : size () - 1) : (n > -size () ? size () - n : 0)); return m_str [n]; }
 		TCHAR &operator[] (size_t n) { return m_str [n]; }
+		TCHAR &at (intptr_t n) {
+			if (size () == 0) {
+				static TCHAR ch = _T ('\0');
+				return ch;
+			}
+			return m_str [((n % size ()) + size ()) % size ()];
+		}
 		const TCHAR *c_str () const { return m_str.c_str (); }
 		const string_t &str () const { return m_str; }
 #if _HAS_CXX17
@@ -851,7 +859,13 @@ namespace faw {
 #endif
 		std::string stra () const { return Encoding::T_to_gb18030 (m_str); }
 		std::wstring strw () const { return Encoding::T_to_utf16 (m_str); }
-		const TCHAR *operator() () { return m_str.c_str (); }
+		//const TCHAR *operator() () { return m_str.c_str (); }
+
+		// 比较及hash
+		bool operator< (const String &_str) const { return m_str < _str.m_str; }
+		bool operator<= (const String &_str) const { return m_str <= _str.m_str; }
+		bool operator> (const String &_str) const { return m_str > _str.m_str; }
+		bool operator>= (const String &_str) const { return m_str >= _str.m_str; }
 
 		//
 		std::vector<String> split (TCHAR _sp = _T (' '), bool no_empty = true) {
