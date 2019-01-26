@@ -1,12 +1,12 @@
 ﻿////////////////////////////////////////////////////////////////////////////////
 //
-// Class Name:  Encoding
-// Description: 编码转换类
+// Class Name:  FawLib
+// Description: FawLib统一引入头文件
 // Class URI:   https://github.com/fawdlstty/FawLib
 // Author:      Fawdlstty
 // Author URI:  https://www.fawdlstty.com/
 // License:     MIT
-// Last Update: Jan 08, 2019
+// Last Update: Jan 25, 2019
 //
 ////////////////////////////////////////////////////////////////////////////////
 
@@ -23,6 +23,7 @@
 #include "Register.hpp"
 #include "File.hpp"
 #include "Directory.hpp"
+#include "Process.hpp"
 
 
 

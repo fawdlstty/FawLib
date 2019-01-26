@@ -60,19 +60,19 @@ namespace faw {
 						ZIPENTRY ze = { 0 };
 						GetZipItem (hZip, -1, &ze);
 						int _file_count = ze.index;
-						if (!Directory::exist (m_app_path.c_str ()))
-							Directory::create (m_app_path.c_str ());
+						Directory::create (m_app_path);
 						for (int i = 0; i < _file_count; ++i) {
 							GetZipItem (hZip, i, &ze);
 							String _tmp = m_app_path + ze.name;
 							_tmp.replace_self (_T ('/'), _T ('\\'));
 							if (ze.attr & FILE_ATTRIBUTE_DIRECTORY) {
-								if (!Directory::exist (_tmp.c_str ()))
-									Directory::create (_tmp.c_str (), ze.attr);
+								Directory::create (_tmp, ze.attr);
 							} else {
 								if (File::exist (_tmp.c_str ()))
 									File::remove (_tmp.c_str ());
-								_ret += (UnzipItem (hZip, i, _tmp.c_str ()) == ZR_OK ? 1 : 0);
+								//_ret += (UnzipItem (hZip, i, _tmp.c_str ()) == ZR_OK ? 1 : 0);
+								if (UnzipItem (hZip, i, _tmp.c_str ()) == ZR_OK)
+									_ret += (size_t) (ze.unc_size > 0 ? ze.unc_size : (ze.comp_size >= 0 ? ze.comp_size : 0));
 								ze.attr &= (FILE_ATTRIBUTE_READONLY | FILE_ATTRIBUTE_HIDDEN | FILE_ATTRIBUTE_SYSTEM | FILE_ATTRIBUTE_ARCHIVE | FILE_ATTRIBUTE_DEVICE | FILE_ATTRIBUTE_NORMAL);
 								if (ze.attr)
 									::SetFileAttributes (_tmp.c_str (), ze.attr);

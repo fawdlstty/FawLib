@@ -6,7 +6,7 @@
 // Author:      Fawdlstty
 // Author URI:  https://www.fawdlstty.com/
 // License:     MIT
-// Last Update: Jan 12, 2019
+// Last Update: Jan 24, 2019
 //
 ////////////////////////////////////////////////////////////////////////////////
 
@@ -63,8 +63,7 @@ namespace faw {
 	public:
 		// 字符串构造函数
 		String () {}
-		String (const char _c, size_t _len = 1) { m_str.assign (_len, (TCHAR) _c); }
-		String (const wchar_t _c, size_t _len = 1) { m_str.assign (_len, (TCHAR) _c); }
+		String (const TCHAR _c, size_t _len = 1) { m_str.assign (_len, _c); }
 		String (const char *_s, size_t _len = _npos) { m_str = Encoding::gb18030_to_T (_len == _npos ? std::string_view (_s) : std::string_view (_s, _len)); }
 		String (const wchar_t *_s, size_t _len = _npos) { m_str = Encoding::utf16_to_T (_len == _npos ? std::wstring_view (_s) : std::wstring_view (_s, _len)); }
 		String (const std::string &_s): m_str (Encoding::gb18030_to_T (std::string_view (_s))) {}
@@ -88,8 +87,7 @@ namespace faw {
 		String &operator= (const std::wstring_view _s) { m_str = Encoding::utf16_to_T (_s); return *this; }
 #endif
 		//
-		String &operator+= (const char _c) { m_str += (TCHAR) _c; return *this; }
-		String &operator+= (const wchar_t _c) { m_str += (TCHAR) _c; return *this; }
+		String &operator+= (const TCHAR _c) { m_str += _c; return *this; }
 		String &operator+= (const char *_s) { m_str += Encoding::gb18030_to_T (std::string_view (_s)); return *this; }
 		String &operator+= (const wchar_t *_s) { m_str += Encoding::utf16_to_T (std::wstring_view (_s)); return *this; }
 		String &operator+= (const std::string &_s) { m_str += Encoding::gb18030_to_T (std::string_view (_s)); return *this; }
@@ -101,8 +99,7 @@ namespace faw {
 		String &operator+= (const std::wstring_view _s) { m_str += Encoding::utf16_to_T (_s); return *this; }
 #endif
 		//
-		String operator+ (const char _c) { String _o (this); _o.m_str += (TCHAR) _c; return _o; }
-		String operator+ (const wchar_t _c) { String _o (this); _o.m_str += (TCHAR) _c; return _o; }
+		String operator+ (const TCHAR _c) { String _o (this); _o.m_str += _c; return _o; }
 		String operator+ (const char *_s) { String _o (this); _o.m_str += Encoding::gb18030_to_T (std::string_view (_s)); return _o; }
 		String operator+ (const wchar_t *_s) { String _o (this); _o.m_str += Encoding::utf16_to_T (std::wstring_view (_s)); return _o; }
 		String operator+ (const std::string &_s) { String _o (this); _o.m_str += Encoding::gb18030_to_T (std::string_view (_s)); return _o; }
@@ -114,8 +111,7 @@ namespace faw {
 		String operator+ (const std::wstring_view _s) { String _o (this); _o.m_str += Encoding::utf16_to_T (_s); return _o; }
 #endif
 		//
-		friend String operator+ (const char _c, String &_o) { _o.m_str.insert (_o.m_str.begin (), (TCHAR) _c); }
-		friend String operator+ (const wchar_t _c, String &_o) { _o.m_str.insert (_o.m_str.begin (), (TCHAR) _c); }
+		friend String operator+ (const TCHAR _c, String &_o) { _o.m_str.insert (_o.m_str.begin (), _c); }
 		friend String operator+ (const char *_s, String &_o) { String _so (_s); _so.m_str += _o.m_str; return _so; }
 		friend String operator+ (const wchar_t *_s, String &_o) { String _so (_s); _so.m_str += _o.m_str; return _so; }
 		friend String operator+ (const std::string &_s, String &_o) { String _so (_s); _so.m_str += _o.m_str; return _so; }
@@ -845,13 +841,7 @@ namespace faw {
 		size_t size () const { return m_str.size (); }
 		//TCHAR &operator[] (intptr_t n) { n = (n > 0 ? (n < size () ? n : size () - 1) : (n > -size () ? size () - n : 0)); return m_str [n]; }
 		TCHAR &operator[] (size_t n) { return m_str [n]; }
-		TCHAR &at (intptr_t n) {
-			if (size () == 0) {
-				static TCHAR ch = _T ('\0');
-				return ch;
-			}
-			return m_str [((n % size ()) + size ()) % size ()];
-		}
+		TCHAR &at (intptr_t n) { static TCHAR _ch = _T ('\0'); return (size () == 0 ? _ch : m_str [((n % size ()) + size ()) % size ()]); }
 		const TCHAR *c_str () const { return m_str.c_str (); }
 		const string_t &str () const { return m_str; }
 #if _HAS_CXX17
