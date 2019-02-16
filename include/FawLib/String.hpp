@@ -1,7 +1,7 @@
 ﻿////////////////////////////////////////////////////////////////////////////////
 //
-// Class Name:  Encoding
-// Description: 编码转换类
+// Class Name:  String
+// Description: 字符串类
 // Class URI:   https://github.com/fawdlstty/FawLib
 // Author:      Fawdlstty
 // Author URI:  https://www.fawdlstty.com/
