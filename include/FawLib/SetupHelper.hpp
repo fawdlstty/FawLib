@@ -6,7 +6,7 @@
 // Author:      Fawdlstty
 // Author URI:  https://www.fawdlstty.com/
 // License:     MIT
-// Last Update: Jan 16, 2019
+// Last Update: Mar 20, 2019
 //
 ////////////////////////////////////////////////////////////////////////////////
 
@@ -127,7 +127,7 @@ namespace faw {
 		}
 
 		// 创建快捷方式
-		String install_setShortcut (std::map<String, String> &_desktop, std::map<String, String> &_startmenu, String _startmenu_folder = _T ("")) {
+		String install_setShortcut (std::map<String, String> &_desktop, std::map<String, String> &_startmenu) {
 			// 创建快捷方式
 			auto _set_shortcut = [] (String _dest_file, String _work_path, String _save_path) -> bool {
 				IShellLink *psl = nullptr;
@@ -149,8 +149,6 @@ namespace faw {
 
 			String _ret = _T ("");
 			TCHAR buf [MAX_PATH];
-			if (_startmenu_folder.empty ())
-				_startmenu_folder = m_app_name;
 			::CoInitializeEx (NULL, COINIT_APARTMENTTHREADED);
 
 			// 桌面快捷方式
@@ -171,7 +169,6 @@ namespace faw {
 			buf [0] = _T ('\0');
 			if (::SHGetSpecialFolderPath (NULL, buf, CSIDL_STARTMENU, TRUE)) {
 				String _start_path = Directory::append_folder_or_file (buf, _T ("Programs"));
-				_start_path = Directory::append_folder_or_file (_start_path, _startmenu_folder);
 				Directory::create (_start_path);
 				for (auto &_item : _startmenu) {
 					String _dest_file = Directory::append_folder_or_file (m_app_path, _item.second);
@@ -233,6 +230,14 @@ namespace faw {
 			String _reg_path = String::format (_T ("HKLM\\SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Uninstall\\%s"), _app_name.c_str ());
 			std::wstring _desp_ver = L"";
 			Register::get_key_value (_reg_path.strw (), L"DisplayVersion", _desp_ver);
+			return _desp_ver;
+		}
+
+		// 获取应用程序所在路径
+		static String get_software_location (String _app_name) {
+			String _reg_path = String::format (_T ("HKLM\\SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Uninstall\\%s"), _app_name.c_str ());
+			std::wstring _desp_ver = L"";
+			Register::get_key_value (_reg_path.strw (), L"InstallLocation", _desp_ver);
 			return _desp_ver;
 		}
 
