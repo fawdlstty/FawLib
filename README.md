@@ -1,4 +1,5 @@
 # FawLib
+
 C++公共支持库，目前包括编码转换类、字符串处理类、文件类、目录类、注册表类与安装包类。
 
 ## 使用说明
@@ -8,56 +9,60 @@ C++公共支持库，目前包括编码转换类、字符串处理类、文件�
 这个类是一个静态类，无需实例化，只在需要时调用静态方法即可。
 
 这个类首先提供了猜测编码功能，可以猜测一串文本是否是ASCII、UTF8、GB18030或UTF16编码。使用方式为：
-```
+
+```cpp
 std::string_view _data = "xxx"; // 或者从文件中读取等等...
 std::string _encoding = faw::Encoding::guess (_data);
 if (_encoding == "utf8" || _encoding == "ascii") {
-	// 能够以utf8方式来解析文本数据
+    // 能够以utf8方式来解析文本数据
 } else if (_encoding == "gb18030" || _encoding == "ascii") {
-	// 能够以gb18030方式来解析文本数据
+    // 能够以gb18030方式来解析文本数据
 } else if (_encoding == "utf16") {
-	// 能够以utf16方式来解析文本数据
+    // 能够以utf16方式来解析文本数据
 }
 ```
 
 另外也能以单独的方式来判断文本数据是否是某个编码：
-```
+
+```cpp
 std::string_view _data = "xxx"; // 或者从文件中读取等等...
 if (faw::Encoding::is_ascii (_data)) {
-	// 能够以ASCII、utf8或GB18030方式来解析文本数据
+    // 能够以ASCII、utf8或GB18030方式来解析文本数据
 } else if (faw::Encoding::is_utf8 (_data)) {
-	// 能够以utf8方式来解析文本数据
+    // 能够以utf8方式来解析文本数据
 } else if (faw::Encoding::is_gb18030 (_data)) {
-	// 能够以gb18030方式来解析文本数据
+    // 能够以gb18030方式来解析文本数据
 } else if (faw::Encoding::is_utf16 (_data)) {
-	// 能够以utf16方式来解析文本数据
+    // 能够以utf16方式来解析文本数据
 }
 ```
 
 除了能判断文本数据编码以外，还能判断是否是某种转码方式：
-```
+
+```cpp
 std::string_view _data = "xxx"; // 或者从文件中读取等等...
 if (faw::Encoding::is_percent_str (_data)) {
-	// %23%E5%FA
+    // %23%E5%FA
 } else if (faw::Encoding::is_escape_x_str (_data)) {
-	// \xBB\xD2\x2A
+    // \xBB\xD2\x2A
 } else if (faw::Encoding::is_escape_u_str (_data)) {
-	// \u6f73\u23BE
+    // \u6f73\u23BE
 } else if (faw::Encoding::is_base64_str (_data)) {
-	// Ga7dX83PdQfnua==
+    // Ga7dX83PdQfnua==
 }
 ```
 
 接下来是编码的转换。提供gb18030、utf8、utf16三种编码的完整的互相转换函数，比如：
 
-```
+```cpp
 std::wstring _s = faw::Encoding::gb18030_to_utf16 ("test");
 ```
 
 相应的把xx_to_xx里面的xx替换为相应的编码方式即可。除此之外还提供了T编码类型，这种类型根据编译方式为多字节或unicode编译方式动态确定为gb18030或utf16，相应的在编码方式位置写上T即可。
 
 然后，此类还提供了常用转码格式的转换函数。
-```
+
+```cpp
 // %23%E5%FA
 // percent/URL 编码转码函数
 std::string _encoded = faw::Encoding::percent_str_encode ("测试");
@@ -90,7 +95,8 @@ _decoded = faw::Encoding::base64_decode (_encoded);
 s7、s8只看右边部分。它俩只在C++17上支持，默认在编译时，类型就是faw::String，因此声明类型可以填auto。
 
 s9、s10均为拷贝字符串，当std::basic_string规则为COW时，拷贝0开销，第一次修改时承受拷贝开销；当std::basic_string规则为SSO时，拷贝承受所有开销，第一次修改时不受其他影响。（这一行不懂没关系，跳过就好）
-```
+
+```cpp
 faw::String s1 { "abc" };
 faw::String s2 { L"abc" };
 faw::String s3 ( "abc" );
@@ -104,7 +110,8 @@ faw::String s10 (&s1);
 ```
 
 然后是“等号=”赋值（+=赋值支持类型与=赋值完全相同，在此不列出代码）：
-```
+
+```cpp
 faw::String s1 = "abc"_fs;
 faw::String s2 = L"abc"_fs;
 faw::String s3 = s1;
@@ -118,7 +125,8 @@ faw::String s10 = std::wstring_view (L"abc");
 ```
 
 另外可以这样，完全不考虑编码方式的随意使用：
-```
+
+```cpp
 faw::String s = "abc";
 s += L"123";
 // 此时s值为 _T ("abc123")
@@ -128,14 +136,16 @@ s += L"123";
 接下来是+运算符，支持左+、右+，受支持运算类型与=、+=相同，因此不再列出代码。+运算不改变操作数，表达式最终会生成一个新的faw::Sring。
 
 字符串类支持*、*=操作，使用方式和python一样，也就是相同的字符串循环多少次：
-```
+
+```cpp
 String s = "a";
 s *= 10;
 // 此时s值为 _T ("aaaaaaaaaa")
 ```
 
 然后是字符串比较，gb18030和utf16编码都可以直接比较，受比较字符串的支持类型与+运算符支持类型相同，在此不全部列出。示例如下：
-```
+
+```cpp
 // 区分大小写的比较
 String s = "abc";
 bool b1 = (s == "abc"); // true
@@ -146,7 +156,8 @@ bool b3 = s.is_equal_nocase ("Abc"); // true
 ```
 
 然后是迭代器，支持如下函数：begin、end、cbegin、cend、rbegin、rend、crbegin、crend，使用方式与std::basic_string相同。示例：
-```
+
+```cpp
 // 以下代码的输出结果为，a、b、c各占一行
 // (只有当类实现了begin和end函数，才支持for-range操作)
 faw::String s1 = "abc";
@@ -156,7 +167,8 @@ for (auto c: s1) {
 ```
 
 然后是字符串流的处理。这部分比较有意思的地方在于，很容易实现浮点数等的转换。另外规则是，<<、>>指向代表数据流动方向，faw::String对象在数据流运算的左侧、右侧分别代表对字符串最前、最后的操作。其中两个faw::String字符串类型的流运算很容易出现歧义，因此两个这种字符串类型就不能使用流运算符。
-```
+
+```cpp
 faw::String s1 = "12abc";
 s1 << _T ('d'); // 此时字符串内容为 12abcd
 _T ('-') >> s1; // 此时字符串内容为 -12abcd
@@ -167,6 +179,7 @@ i << s1; // 此时字符串内容为 abcd，i内容为-12
 ```
 
 然后是一些零散的函数，部分源于STL，不过删掉了很多几乎没用的重载函数；其他的用法也很像其他高级语言。杂项函数有：
+
 1. 查找函数：find、rfind
 2. 生成新字符串函数：trim_left、trim_right、trim、upper、lower、reverse、replace
 3. 修改自身字符串函数：trim_left_self、trim_right_self、trim_self、upper_self、lower_self、reverse_self、replace_self

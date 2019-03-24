@@ -1,7 +1,7 @@
-#////////////////////////////////////////////////////////////////////////////////
+ï»¿#////////////////////////////////////////////////////////////////////////////////
 //
 // Class Name:  Process
-// Description: ½ø³ÌÀà
+// Description: è¿›ç¨‹ç±»
 // Class URI:   https://github.com/fawdlstty/FawLib
 // Author:      Fawdlstty
 // Author URI:  https://www.fawdlstty.com/
@@ -58,7 +58,11 @@ namespace faw {
 			return true;
 		}
 
-		// ÅĞ¶Ï½ø³ÌÊÇ·ñ´æÔÚ
+		static void shell (String _url) {
+			::ShellExecute (NULL, _T ("open"), _url.c_str (), nullptr, nullptr, SW_SHOW);
+		}
+
+		// åˆ¤æ–­è¿›ç¨‹æ˜¯å¦å­˜åœ¨
 		static bool process_exist (String file) {
 			HANDLE hSnapShot = ::CreateToolhelp32Snapshot (TH32CS_SNAPPROCESS, 0);
 			PROCESSENTRY32 pe32 { sizeof (PROCESSENTRY32) };

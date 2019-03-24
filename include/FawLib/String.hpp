@@ -1,7 +1,7 @@
 ﻿////////////////////////////////////////////////////////////////////////////////
 //
-// Class Name:  String
-// Description: 字符串类
+// Class Name:  Encoding
+// Description: 编码转换类
 // Class URI:   https://github.com/fawdlstty/FawLib
 // Author:      Fawdlstty
 // Author URI:  https://www.fawdlstty.com/
@@ -57,13 +57,14 @@ namespace faw {
 		align_right		= 0x00000000,
 	};
 	// 用于将数据输入管道时，设置左右两侧padding以及浮点数小数位数设置
-	flag set_width (size_t _width, flag _f = flag::none) { return (flag) ((_width & 0xffff) | (size_t) _f); }
+	inline flag set_width (size_t _width, flag _f = flag::none) { return (flag) ((_width & 0xffff) | (size_t) _f); }
 
 	class String {
 	public:
 		// 字符串构造函数
 		String () {}
-		String (const TCHAR _c, size_t _len = 1) { m_str.assign (_len, _c); }
+		String (const char _c, size_t _len = 1) { m_str.assign (_len, (TCHAR) _c); }
+		String (const wchar_t _c, size_t _len = 1) { m_str.assign (_len, (TCHAR) _c); }
 		String (const char *_s, size_t _len = _npos) { m_str = Encoding::gb18030_to_T (_len == _npos ? std::string_view (_s) : std::string_view (_s, _len)); }
 		String (const wchar_t *_s, size_t _len = _npos) { m_str = Encoding::utf16_to_T (_len == _npos ? std::wstring_view (_s) : std::wstring_view (_s, _len)); }
 		String (const std::string &_s): m_str (Encoding::gb18030_to_T (std::string_view (_s))) {}
@@ -87,7 +88,8 @@ namespace faw {
 		String &operator= (const std::wstring_view _s) { m_str = Encoding::utf16_to_T (_s); return *this; }
 #endif
 		//
-		String &operator+= (const TCHAR _c) { m_str += _c; return *this; }
+		String &operator+= (const char _c) { m_str += (TCHAR) _c; return *this; }
+		String &operator+= (const wchar_t _c) { m_str += (TCHAR) _c; return *this; }
 		String &operator+= (const char *_s) { m_str += Encoding::gb18030_to_T (std::string_view (_s)); return *this; }
 		String &operator+= (const wchar_t *_s) { m_str += Encoding::utf16_to_T (std::wstring_view (_s)); return *this; }
 		String &operator+= (const std::string &_s) { m_str += Encoding::gb18030_to_T (std::string_view (_s)); return *this; }
@@ -99,7 +101,8 @@ namespace faw {
 		String &operator+= (const std::wstring_view _s) { m_str += Encoding::utf16_to_T (_s); return *this; }
 #endif
 		//
-		String operator+ (const TCHAR _c) { String _o (this); _o.m_str += _c; return _o; }
+		String operator+ (const char _c) { String _o (this); _o.m_str += (TCHAR) _c; return _o; }
+		String operator+ (const wchar_t _c) { String _o (this); _o.m_str += (TCHAR) _c; return _o; }
 		String operator+ (const char *_s) { String _o (this); _o.m_str += Encoding::gb18030_to_T (std::string_view (_s)); return _o; }
 		String operator+ (const wchar_t *_s) { String _o (this); _o.m_str += Encoding::utf16_to_T (std::wstring_view (_s)); return _o; }
 		String operator+ (const std::string &_s) { String _o (this); _o.m_str += Encoding::gb18030_to_T (std::string_view (_s)); return _o; }
@@ -111,7 +114,8 @@ namespace faw {
 		String operator+ (const std::wstring_view _s) { String _o (this); _o.m_str += Encoding::utf16_to_T (_s); return _o; }
 #endif
 		//
-		friend String operator+ (const TCHAR _c, String &_o) { _o.m_str.insert (_o.m_str.begin (), _c); }
+		friend String operator+ (const char _c, String &_o) { _o.m_str.insert (_o.m_str.begin (), (TCHAR) _c); }
+		friend String operator+ (const wchar_t _c, String &_o) { _o.m_str.insert (_o.m_str.begin (), (TCHAR) _c); }
 		friend String operator+ (const char *_s, String &_o) { String _so (_s); _so.m_str += _o.m_str; return _so; }
 		friend String operator+ (const wchar_t *_s, String &_o) { String _so (_s); _so.m_str += _o.m_str; return _so; }
 		friend String operator+ (const std::string &_s, String &_o) { String _so (_s); _so.m_str += _o.m_str; return _so; }
@@ -660,14 +664,14 @@ namespace faw {
 		size_t rfind (std::wstring_view _s, size_t _off = 0) { return m_str.rfind (_s, _off); }
 #	endif
 #else
-		size_t find (std::string &_s, size_t _off = 0) { return find (_s, _off); }
+		size_t find (std::string &_s, size_t _off = 0) { return m_str.find (_s, _off); }
 		size_t find (std::wstring &_s, size_t _off = 0) { return m_str.find (Encoding::utf16_to_gb18030 (_s), _off); }
-		size_t rfind (std::string &_s, size_t _off = 0) { return rfind (_s, _off); }
+		size_t rfind (std::string &_s, size_t _off = 0) { return m_str.rfind (_s, _off); }
 		size_t rfind (std::wstring &_s, size_t _off = 0) { return m_str.rfind (Encoding::utf16_to_gb18030 (_s), _off); }
 #	if _HAS_CXX17
-		size_t find (std::string_view _s, size_t _off = 0) { return find (_s, _off); }
+		size_t find (std::string_view _s, size_t _off = 0) { return m_str.find (_s, _off); }
 		size_t find (std::wstring_view _s, size_t _off = 0) { return m_str.find (Encoding::utf16_to_gb18030 (_s), _off); }
-		size_t rfind (std::string_view _s, size_t _off = 0) { return rfind (_s, _off); }
+		size_t rfind (std::string_view _s, size_t _off = 0) { return m_str.rfind (_s, _off); }
 		size_t rfind (std::wstring_view _s, size_t _off = 0) { return m_str.rfind (Encoding::utf16_to_gb18030 (_s), _off); }
 #	endif
 #endif
@@ -739,8 +743,8 @@ namespace faw {
 		String replace (std::string_view _src, std::string_view _dest) const {
 			String _s (this);
 #ifdef _UNICODE
-			std::wstring _tmp_src = tool_Encoding::gb18030_to_utf16 (_src);
-			std::wstring _tmp_dest = tool_Encoding::gb18030_to_utf16 (_dest);
+			std::wstring _tmp_src = faw::Encoding::gb18030_to_utf16 (_src);
+			std::wstring _tmp_dest = faw::Encoding::gb18030_to_utf16 (_dest);
 			return replace (_tmp_src, _tmp_dest);
 #else
 			size_t pos = _s.m_str.find (_src);
@@ -796,8 +800,8 @@ namespace faw {
 		}
 		String &replace_self (std::string_view _src, std::string_view _dest) {
 #ifdef _UNICODE
-			std::wstring _tmp_src = tool_Encoding::gb18030_to_utf16 (_src);
-			std::wstring _tmp_dest = tool_Encoding::gb18030_to_utf16 (_dest);
+			std::wstring _tmp_src = faw::Encoding::gb18030_to_utf16 (_src);
+			std::wstring _tmp_dest = faw::Encoding::gb18030_to_utf16 (_dest);
 			return replace_self (_tmp_src, _tmp_dest);
 #else
 			size_t pos = m_str.find (_src);
@@ -1019,8 +1023,8 @@ namespace faw {
 
 #if _HAS_CXX17
 inline namespace _faw {
-	[[nodiscard]] ::faw::String operator "" _fs (const char *_s, size_t _len) noexcept { return ::faw::String (_s, (size_t) _len); }
-	[[nodiscard]] ::faw::String operator "" _fs (const wchar_t *_s, size_t _len) noexcept { return ::faw::String (_s, (size_t) _len); }
+	[[nodiscard]] inline ::faw::String operator "" _fs (const char *_s, size_t _len) noexcept { return ::faw::String (_s, (size_t) _len); }
+	[[nodiscard]] inline ::faw::String operator "" _fs (const wchar_t *_s, size_t _len) noexcept { return ::faw::String (_s, (size_t) _len); }
 }
 #endif
 
