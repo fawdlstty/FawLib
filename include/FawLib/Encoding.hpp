@@ -17,6 +17,7 @@
 
 #include <string>
 #include <Windows.h>
+#include <tchar.h>
 
 #ifndef _FAW_STRING_TYPE
 	#define _FAW_STRING_TYPE
@@ -137,6 +138,9 @@ namespace faw {
 			}
 			return ret;
 		}
+		static bool is_percent_str (std::wstring_view data) {
+			return is_percent_str (T_to_utf8 (data));
+		}
 		static bool is_escape_x_str (std::string_view data) {
 			bool ret = false;
 			for (size_t i = 0; i < data.size (); ++i) {
@@ -157,6 +161,9 @@ namespace faw {
 				}
 			}
 			return ret;
+		}
+		static bool is_escape_x_str (std::wstring_view data) {
+			return is_escape_x_str (T_to_utf8 (data));
 		}
 		static bool is_escape_u_str (std::string_view data) {
 			bool ret = false;
@@ -183,6 +190,9 @@ namespace faw {
 			}
 			return ret;
 		}
+		static bool is_escape_u_str (std::wstring_view data) {
+			return is_escape_u_str (T_to_utf8 (data));
+		}
 		static bool is_base64_str (std::string_view data) {
 			for (size_t i = 0; i < data.size (); ++i) {
 				if (!_is_base64_char (data[i])) {
@@ -191,6 +201,9 @@ namespace faw {
 				}
 			}
 			return true;
+		}
+		static bool is_base64_str (std::wstring_view data) {
+			return is_base64_str (T_to_utf8 (data));
 		}
 
 		// 编码转换
@@ -254,59 +267,63 @@ namespace faw {
 
 	public:
 		// 转码格式转换
-		static std::string percent_str_encode (std::string_view data) {
-			const static char *hex_char = "0123456789ABCDEF";
+		static faw::string_t percent_str_encode (faw::string_view_t data) {
+			std::string _data = T_to_utf8 (data);
+			static LPCSTR hex_char = "0123456789ABCDEF";
 			std::string ret = "";
-			for (size_t i = 0; i < data.size (); ++i) {
-				char ch = data[i];
+			for (size_t i = 0; i < _data.size (); ++i) {
+				char ch = _data [i];
 				if (isalnum ((unsigned char) ch) || ch == '-' || ch == '_' || ch == '.' || ch == '~') {
 					ret += ch;
 				} else if (ch == ' ') {
 					ret += "+";
 				} else {
 					ret += '%';
-					ret += hex_char[((unsigned char) ch) >> 4];
-					ret += hex_char[((unsigned char) ch) % 16];
+					ret += hex_char[(0xf0 & (uint32_t) ch) >> 4];
+					ret += hex_char[0xf & (uint32_t) ch];
 				}
 			}
-			return ret;
+			return utf8_to_T (ret);
 		}
-		static std::string percent_str_decode (std::string_view data) {
+		static faw::string_t percent_str_decode (faw::string_view_t data) {
+			std::string _data = T_to_utf8 (data);
 			std::string ret = "";
-			for (size_t i = 0; i < data.size (); ++i) {
-				char ch = data[i];
+			for (size_t i = 0; i < _data.size (); ++i) {
+				char ch = _data [i];
 				if (ch == '%') {
-					ret += (char) ((hex_char_to_dec (data[i + 1]) << 4) | hex_char_to_dec (data[i + 2]));
+					ret += (char) ((hex_char_to_dec (_data [i + 1]) << 4) | hex_char_to_dec (_data [i + 2]));
 					i += 2;
 				} else {
 					ret += ch;
 				}
 			}
-			return ret;
+			return utf8_to_T (ret);
 		}
-		static std::string escape_x_str_encode (std::string_view data) {
-			const static char *hex_char = "0123456789ABCDEF";
+		static faw::string_t escape_x_str_encode (faw::string_view_t data) {
+			std::string _data = T_to_utf8 (data);
+			static LPCSTR hex_char = "0123456789ABCDEF";
 			std::string ret = "";
-			for (size_t i = 0; i < data.size (); ++i) {
-				char ch = data[i];
+			for (size_t i = 0; i < _data.size (); ++i) {
+				TCHAR ch = _data [i];
 				if ((ch >= 0x20 && ch <= 0x7e) || ch == '\x09' || ch == '\x0a' || ch == '\x0b' || ch == '\x0d') {
 					ret += ch;
 				} else {
 					ret += "\\x";
-					ret += hex_char[((unsigned char) ch) >> 4];
-					ret += hex_char[((unsigned char) ch) % 16];
+					ret += hex_char[(0xf0 & (uint32_t) ch) >> 4];
+					ret += hex_char[0xf & (uint32_t) ch];
 				}
 			}
-			return ret;
+			return utf8_to_T (ret);
 		}
-		static std::string escape_x_str_decode (std::string_view data) {
+		static faw::string_t escape_x_str_decode (faw::string_view_t data) {
+			std::string _data = T_to_utf8 (data);
 			std::string ret = "";
-			for (size_t i = 0; i < data.size (); ++i) {
-				char ch = data[i];
+			for (size_t i = 0; i < _data.size (); ++i) {
+				TCHAR ch = _data [i];
 				if (ch == '\\') {
-					ch = data[++i];
+					ch = _data [++i];
 					if (ch == 'x') {
-						ret += (char) ((hex_char_to_dec (data[i + 1]) << 4) | hex_char_to_dec (data[i + 2]));
+						ret += (char) ((hex_char_to_dec (_data [i + 1]) << 4) | hex_char_to_dec (_data [i + 2]));
 						i += 2;
 					} else {
 						ret += '\\';
@@ -316,35 +333,37 @@ namespace faw {
 					ret += ch;
 				}
 			}
-			return ret;
+			return utf8_to_T (ret);
 		}
-		static std::string escape_u_str_encode (std::string_view data) {
-			const static char *hex_char = "0123456789ABCDEF";
+		static faw::string_t escape_u_str_encode (faw::string_view_t data) {
+			std::string _data = T_to_utf8 (data);
+			static LPCSTR hex_char = "0123456789ABCDEF";
 			std::string ret = "";
-			for (size_t i = 0; i < data.size (); ++i) {
-				char ch = data[i];
+			for (size_t i = 0; i < _data.size (); ++i) {
+				TCHAR ch = _data [i];
 				if (ch & 0x80) {
 					ret += "\\u";
-					ret += hex_char[((unsigned char) ch) >> 4];
-					ret += hex_char[((unsigned char) ch) % 16];
-					ch = data[++i];
-					ret += hex_char[((unsigned char) ch) >> 4];
-					ret += hex_char[((unsigned char) ch) % 16];
+					ret += hex_char[(0xf0 & (uint32_t) ch) >> 4];
+					ret += hex_char[0xf & (uint32_t) ch];
+					ch = _data [++i];
+					ret += hex_char[(0xf0 & (uint32_t) ch) >> 4];
+					ret += hex_char[0xf & (uint32_t) ch];
 				} else {
 					ret += ch;
 				}
 			}
-			return ret;
+			return utf8_to_T (ret);
 		}
-		static std::string escape_u_str_decode (std::string_view data) {
+		static faw::string_t escape_u_str_decode (faw::string_view_t data) {
+			std::string _data = T_to_utf8 (data);
 			std::string ret = "";
-			for (size_t i = 0; i < data.size (); ++i) {
-				char ch = data[i];
+			for (size_t i = 0; i < _data.size (); ++i) {
+				TCHAR ch = _data [i];
 				if (ch == '\\') {
-					ch = data[++i];
+					ch = _data [++i];
 					if (ch == 'u') {
-						ret += (char) ((hex_char_to_dec (data[i + 1]) << 4) | hex_char_to_dec (data[i + 2]));
-						ret += (char) ((hex_char_to_dec (data[i + 3]) << 4) | hex_char_to_dec (data[i + 4]));
+						ret += (TCHAR) ((hex_char_to_dec (_data [i + 1]) << 4) | hex_char_to_dec (_data [i + 2]));
+						ret += (TCHAR) ((hex_char_to_dec (_data [i + 3]) << 4) | hex_char_to_dec (_data [i + 4]));
 						i += 4;
 					} else {
 						ret += '\\';
@@ -354,15 +373,16 @@ namespace faw {
 					ret += ch;
 				}
 			}
-			return ret;
+			return utf8_to_T (ret);
 		}
-		static std::string base64_encode (std::string_view data) {
+		static faw::string_t base64_encode (faw::string_view_t data) {
+			std::string _data = T_to_utf8 (data);
 			static const std::string base64_chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
-			std::string ret;
-			int i = 0, j = 0;
-			unsigned char char_3[3], char_4[4];
-			unsigned int in_len = data.size ();
-			unsigned char* bytes_to_encode = (unsigned char*) &data[0];
+			std::string ret = "";
+			size_t i = 0, j = 0;
+			TBYTE char_3[3], char_4[4];
+			size_t in_len = _data.size ();
+			PTBYTE bytes_to_encode = (PTBYTE) &_data [0];
 			while (in_len--) {
 				char_3[i++] = *(bytes_to_encode++);
 				if (i == 3) {
@@ -387,13 +407,14 @@ namespace faw {
 				while ((i++ < 3))
 					ret += '=';
 			}
-			return ret;
+			return utf8_to_T (ret);
 		}
-		static std::string base64_decode (std::string_view data) {
+		static faw::string_t base64_decode (faw::string_view_t data) {
+			std::string _data = T_to_utf8 (data);
 			static const std::string base64_chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
-			int in_len = data.size (), i = 0, j = 0, in_ = 0;
-			unsigned char char_4[4], char_3[3];
-			std::string ret;
+			size_t in_len = data.size (), i = 0, j = 0, in_ = 0;
+			TBYTE char_4[4], char_3[3];
+			std::string ret = "";
 			auto is_base64 = [] (unsigned char c) { return (isalnum (c) || (c == '+') || (c == '/')); };
 			while (in_len-- && (data[in_] != '=') && is_base64 (data[in_])) {
 				char_4[i++] = data[in_]; in_++;
@@ -416,7 +437,7 @@ namespace faw {
 				char_3[1] = ((char_4[1] & 0xf) << 4) + ((char_4[2] & 0x3c) >> 2);
 				for (j = 0; j < i - 1; j++) ret += char_3[j];
 			}
-			return ret;
+			return utf8_to_T (ret);
 		}
 	};
 }
