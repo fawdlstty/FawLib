@@ -139,7 +139,7 @@ namespace faw {
 			return ret;
 		}
 		static bool is_percent_str (std::wstring_view data) {
-			return is_percent_str (T_to_utf8 (data));
+			return is_percent_str (utf16_to_utf8 (data));
 		}
 		static bool is_escape_x_str (std::string_view data) {
 			bool ret = false;
@@ -163,7 +163,7 @@ namespace faw {
 			return ret;
 		}
 		static bool is_escape_x_str (std::wstring_view data) {
-			return is_escape_x_str (T_to_utf8 (data));
+			return is_escape_x_str (utf16_to_utf8 (data));
 		}
 		static bool is_escape_u_str (std::string_view data) {
 			bool ret = false;
@@ -191,7 +191,7 @@ namespace faw {
 			return ret;
 		}
 		static bool is_escape_u_str (std::wstring_view data) {
-			return is_escape_u_str (T_to_utf8 (data));
+			return is_escape_u_str (utf16_to_utf8 (data));
 		}
 		static bool is_base64_str (std::string_view data) {
 			for (size_t i = 0; i < data.size (); ++i) {
@@ -203,7 +203,7 @@ namespace faw {
 			return true;
 		}
 		static bool is_base64_str (std::wstring_view data) {
-			return is_base64_str (T_to_utf8 (data));
+			return is_base64_str (utf16_to_utf8 (data));
 		}
 
 		// 编码转换
