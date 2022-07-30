@@ -72,7 +72,7 @@ namespace faw {
 					String _path = pe32.szExeFile;
 					_path.replace_self (_T ('/'), _T ('\\'));
 					size_t p = _path.rfind (_T ('\\'));
-					if (_path.substr (p + 1) == file) {
+					if (_path.substr (p + 1).operator== (file)) {
 						::CloseHandle (hSnapShot);
 						return true;
 					}

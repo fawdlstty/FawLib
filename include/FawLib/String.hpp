@@ -74,7 +74,6 @@ namespace faw {
 		String (const std::wstring_view _s): m_str (Encoding::utf16_to_T (_s)) {}
 #endif
 		String (const String &_s): m_str (_s.m_str) {}
-		String (const String *_s): m_str (_s->m_str) {}
 
 		// 字符串符号重载函数
 		String &operator= (const char *_s) { m_str = Encoding::gb18030_to_T (std::string_view (_s)); return *this; }
@@ -82,7 +81,6 @@ namespace faw {
 		String &operator= (const std::string &_s) { m_str = Encoding::gb18030_to_T (std::string_view (_s)); return *this; }
 		String &operator= (const std::wstring &_s) { m_str = Encoding::utf16_to_T (std::wstring_view (_s)); return *this; }
 		String &operator= (const String &_s) { m_str = _s.m_str; return *this; }
-		String &operator= (const String *_s) { m_str = _s->m_str; return *this; }
 #if _HAS_CXX17
 		String &operator= (const std::string_view _s) { m_str = Encoding::gb18030_to_T (_s); return *this; }
 		String &operator= (const std::wstring_view _s) { m_str = Encoding::utf16_to_T (_s); return *this; }
@@ -95,23 +93,21 @@ namespace faw {
 		String &operator+= (const std::string &_s) { m_str += Encoding::gb18030_to_T (std::string_view (_s)); return *this; }
 		String &operator+= (const std::wstring &_s) { m_str += Encoding::utf16_to_T (std::wstring_view (_s)); return *this; }
 		String &operator+= (const String &_s) { m_str += _s.m_str; return *this; }
-		String &operator+= (const String *_s) { m_str += _s->m_str; return *this; }
 #if _HAS_CXX17
 		String &operator+= (const std::string_view _s) { m_str += Encoding::gb18030_to_T (_s); return *this; }
 		String &operator+= (const std::wstring_view _s) { m_str += Encoding::utf16_to_T (_s); return *this; }
 #endif
 		//
-		String operator+ (const char _c) { String _o (this); _o.m_str += (TCHAR) _c; return _o; }
-		String operator+ (const wchar_t _c) { String _o (this); _o.m_str += (TCHAR) _c; return _o; }
-		String operator+ (const char *_s) { String _o (this); _o.m_str += Encoding::gb18030_to_T (std::string_view (_s)); return _o; }
-		String operator+ (const wchar_t *_s) { String _o (this); _o.m_str += Encoding::utf16_to_T (std::wstring_view (_s)); return _o; }
-		String operator+ (const std::string &_s) { String _o (this); _o.m_str += Encoding::gb18030_to_T (std::string_view (_s)); return _o; }
-		String operator+ (const std::wstring &_s) { String _o (this); _o.m_str += Encoding::utf16_to_T (std::wstring_view (_s)); return _o; }
-		String operator+ (const String &_s) { String _o (this); _o.m_str += _s.m_str; return _o; }
-		String operator+ (const String *_s) { String _o (this); _o.m_str += _s->m_str; return _o; }
+		String operator+ (const char _c) { String _o (*this); _o.m_str += (TCHAR) _c; return _o; }
+		String operator+ (const wchar_t _c) { String _o (*this); _o.m_str += (TCHAR) _c; return _o; }
+		String operator+ (const char *_s) { String _o (*this); _o.m_str += Encoding::gb18030_to_T (std::string_view (_s)); return _o; }
+		String operator+ (const wchar_t *_s) { String _o (*this); _o.m_str += Encoding::utf16_to_T (std::wstring_view (_s)); return _o; }
+		String operator+ (const std::string &_s) { String _o (*this); _o.m_str += Encoding::gb18030_to_T (std::string_view (_s)); return _o; }
+		String operator+ (const std::wstring &_s) { String _o (*this); _o.m_str += Encoding::utf16_to_T (std::wstring_view (_s)); return _o; }
+		String operator+ (const String &_s) { String _o (*this); _o.m_str += _s.m_str; return _o; }
 #if _HAS_CXX17
-		String operator+ (const std::string_view _s) { String _o (this); _o.m_str += Encoding::gb18030_to_T (_s); return _o; }
-		String operator+ (const std::wstring_view _s) { String _o (this); _o.m_str += Encoding::utf16_to_T (_s); return _o; }
+		String operator+ (const std::string_view _s) { String _o (*this); _o.m_str += Encoding::gb18030_to_T (_s); return _o; }
+		String operator+ (const std::wstring_view _s) { String _o (*this); _o.m_str += Encoding::utf16_to_T (_s); return _o; }
 #endif
 		//
 		friend String operator+ (const char _c, String &_o) { _o.m_str.insert (_o.m_str.begin (), (TCHAR) _c); }
@@ -131,7 +127,6 @@ namespace faw {
 		bool operator== (const std::string &_s) const { String _o (_s); return m_str == _o.m_str; }
 		bool operator== (const std::wstring &_s) const { String _o (_s); return m_str == _o.m_str; }
 		bool operator== (const String &_o) const { return m_str == _o.m_str; }
-		bool operator== (const String *_o) const { return m_str == _o->m_str; }
 #if _HAS_CXX17
 		bool operator== (const std::string_view _s) const { String _o (_s); return m_str == _o.m_str; }
 		bool operator== (const std::wstring_view _s) const { String _o (_s); return m_str == _o.m_str; }
@@ -141,7 +136,6 @@ namespace faw {
 		friend bool operator== (const wchar_t *_s, String &_o) { return _o == _s; }
 		friend bool operator== (const std::string &_s, String &_o) { return _o == _s; }
 		friend bool operator== (const std::wstring &_s, String &_o) { return _o == _s; }
-		friend bool operator== (const String *_o, const String &_o2) { return _o2  == *_o; }
 #if _HAS_CXX17
 		friend bool operator== (const std::string_view _s, String &_o) { return _o == _s; }
 		friend bool operator== (const std::wstring_view _s, String &_o) { return _o == _s; }
@@ -152,7 +146,6 @@ namespace faw {
 		bool operator!= (const std::string &_s) const { String _o (_s); return m_str != _o.m_str; }
 		bool operator!= (const std::wstring &_s) const { String _o (_s); return m_str != _o.m_str; }
 		bool operator!= (const String &_o) const { return m_str != _o.m_str; }
-		bool operator!= (const String *_o) const { return m_str != _o->m_str; }
 #if _HAS_CXX17
 		bool operator!= (const std::string_view _s) const { String _o (_s); return m_str != _o.m_str; }
 		bool operator!= (const std::wstring_view _s) const { String _o (_s); return m_str != _o.m_str; }
@@ -162,7 +155,6 @@ namespace faw {
 		friend bool operator!= (const wchar_t *_s, String &_o) { return _o != _s; }
 		friend bool operator!= (const std::string &_s, String &_o) { return _o != _s; }
 		friend bool operator!= (const std::wstring &_s, String &_o) { return _o != _s; }
-		friend bool operator!= (String *_o, String &_o2) { return _o2  != *_o; }
 #if _HAS_CXX17
 		friend bool operator!= (const std::string_view _s, String &_o) { return _o != _s; }
 		friend bool operator!= (const std::wstring_view _s, String &_o) { return _o != _s; }
@@ -173,7 +165,6 @@ namespace faw {
 		bool is_equal (const std::string &_s) { return operator== (_s); }
 		bool is_equal (const std::wstring &_s) { return operator== (_s); }
 		bool is_equal (String &_o) { return operator== (_o); }
-		bool is_equal (String *_o) { return operator== (_o); }
 #if _HAS_CXX17
 		bool is_equal (const std::string_view _s) { return operator== (_s); }
 		bool is_equal (const std::wstring_view _s) { return operator== (_s); }
@@ -200,7 +191,6 @@ namespace faw {
 				}
 			}
 			return true; }
-		bool is_equal_nocase (String *_o) { return is_equal_nocase (*_o); }
 #if _HAS_CXX17
 		bool is_equal_nocase (const std::string_view _s) { String _o (_s); return is_equal_nocase (_o); }
 		bool is_equal_nocase (const std::wstring_view _s) { String _o (_s); return is_equal_nocase (_o); }
@@ -725,13 +715,13 @@ namespace faw {
 		}
 
 		// 字符串处理（生成新字符串）
-		String trim_left () const { String _s (this); _s.m_str.erase (0, _s.m_str.find_first_not_of (_T (' '))); return _s; }
-		String trim_right () const { String _s (this); _s.m_str.erase (_s.m_str.find_last_not_of (' ') + 1); return _s; }
+		String trim_left () const { String _s (*this); _s.m_str.erase (0, _s.m_str.find_first_not_of (_T (' '))); return _s; }
+		String trim_right () const { String _s (*this); _s.m_str.erase (_s.m_str.find_last_not_of (' ') + 1); return _s; }
 		String trim () const { return trim_left ().trim_right_self (); }
-		String upper () const { String _s (this); std::transform (_s.m_str.begin (), _s.m_str.end (), _s.m_str.begin (), ::toupper); return _s; }
-		String lower () const { String _s (this); std::transform (_s.m_str.begin (), _s.m_str.end (), _s.m_str.begin (), ::tolower); return _s; }
+		String upper () const { String _s (*this); std::transform (_s.m_str.begin (), _s.m_str.end (), _s.m_str.begin (), ::toupper); return _s; }
+		String lower () const { String _s (*this); std::transform (_s.m_str.begin (), _s.m_str.end (), _s.m_str.begin (), ::tolower); return _s; }
 		String reverse () const {
-			String _s (this);
+			String _s (*this);
 			size_t size = _s.m_str.size ();
 			for (size_t i = 0; i < size / 2; ++i) {
 				TCHAR ch = _s.m_str [i];
@@ -741,7 +731,7 @@ namespace faw {
 			return _s;
 		}
 		String replace (std::string_view _src, std::string_view _dest) const {
-			String _s (this);
+			String _s (*this);
 #ifdef _UNICODE
 			std::wstring _tmp_src = faw::Encoding::gb18030_to_utf16 (_src);
 			std::wstring _tmp_dest = faw::Encoding::gb18030_to_utf16 (_dest);
@@ -756,7 +746,7 @@ namespace faw {
 #endif
 		}
 		String replace (std::wstring_view _src, std::wstring_view _dest) const {
-			String _s (this);
+			String _s (*this);
 #ifdef _UNICODE
 			size_t pos = _s.m_str.find (_src);
 			while (pos != _npos) {
@@ -771,7 +761,7 @@ namespace faw {
 #endif
 		}
 		String replace (TCHAR _src, TCHAR _dest) const {
-			String _s (this);
+			String _s (*this);
 			size_t pos = _s.m_str.find (_src);
 			while (pos != _npos) {
 				_s.m_str [pos] = _dest;
@@ -780,9 +770,9 @@ namespace faw {
 			return _s;
 		}
 		String left (size_t n) const { return (n >= size () ? str () : str ().substr (0, n)); }
-		bool left_is (String _str) const { return left (_str.size ()) == _str; }
+		bool left_is (String _str) const { return left (_str.size ()).operator== (_str); }
 		String right (size_t n) const { return (n >= size () ? str () : str ().substr (size () - n)); }
-		bool right_is (String _str) const { return right (_str.size ()) == _str; }
+		bool right_is (String _str) const { return right (_str.size ()).operator== (_str); }
 		String substr (size_t begin, size_t len = String::_npos) const { return (begin >= size () ? _T ("") : (begin + len >= size () ? str ().substr (begin) : str ().substr (begin, len))); }
 
 		// 字符串处理（改变自身）
